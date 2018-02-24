@@ -17,7 +17,7 @@
         "up": "docker-compose up -d --remove-orphans",
         "down": "docker-compose down -v",
         "restartdb": "npm run down && npm run up",
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "jest --verbose **/*.test.js"
     },
     "author": "",
     "license": "ISC",
@@ -44,9 +44,11 @@
         "@types/express": "^4.16.1",
         "@types/google__maps": "^0.5.2",
         "@types/graphql": "^14.0.5",
+        "@types/jest": "^24.0.11",
         "@types/node": "^10.12.20",
         "@types/passport": "^1.0.0",
         "firebase-tools": "^6.3.1",
+        "jest": "^24.7.1",
         "typescript": "^3.2.4"
     }
 }
