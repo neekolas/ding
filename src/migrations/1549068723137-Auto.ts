@@ -1,11 +1,11 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
-export class First1548987784152 implements MigrationInterface {
+export class Auto1549068723137 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`CREATE TABLE "person" ("id" SERIAL NOT NULL, "nodeID" uuid NOT NULL DEFAULT uuid_generate_v4(), "firstName" character varying NOT NULL, "lastName" character varying NOT NULL, "auth0ID" character varying, "phoneNumber" character varying, "slackUser" character varying, CONSTRAINT "PK_5fdaf670315c4b7e70cce85daa3" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE UNIQUE INDEX "IDX_5df72a74c70b3b538495bbc495" ON "person" ("nodeID") `);
-        await queryRunner.query(`CREATE TABLE "buzzer" ("id" SERIAL NOT NULL, "placeID" character varying NOT NULL, "phoneNumber" character varying, "name" character varying, "address" character varying NOT NULL, CONSTRAINT "PK_c1657b513a22d0e477f8a08c69e" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "buzzer" ("id" SERIAL NOT NULL, "placeID" character varying NOT NULL, "phoneNumber" character varying, "address" character varying NOT NULL, "country" character varying NOT NULL, CONSTRAINT "PK_c1657b513a22d0e477f8a08c69e" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE UNIQUE INDEX "IDX_f89252f124736e498cedd04d2b" ON "buzzer" ("phoneNumber") `);
         await queryRunner.query(`CREATE TABLE "twilio_line" ("id" SERIAL NOT NULL, "phoneNumber" character varying NOT NULL, "country" character varying NOT NULL, CONSTRAINT "PK_0c13399a0fdabbc6dc99e4ce871" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE UNIQUE INDEX "IDX_e8fb63ed864ffed9a10f47f5d1" ON "twilio_line" ("phoneNumber") `);

@@ -7,8 +7,8 @@ default: # default connection
   type: postgres
   synchronize: false,
   entities:
-    - lib/models/*.ts
+    - src/models/*.ts
   migrations:
-    - lib/migrations/*.ts
+    - src/migrations/*.ts
   cli:
-    migrationsDir: lib/migrations
+    migrationsDir: src/migrations
