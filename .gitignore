@@ -3,3 +3,5 @@ node_modules
 *.env
 pk.json
 dist
+*.log
+.DS_STORE

@@ -12,7 +12,7 @@
 		"serve": "npm run build && firebase serve --only functions",
 		"shell": "npm run build && firebase functions:shell",
 		"start": "npm run shell",
-		"clean": "rm -rf ./dist",
+		"clean": "rm -rf ./dist || true",
 		"deploy": "npm run clean && firebase deploy --only functions",
 		"logs": "firebase functions:log",
 		"migrations:up": "ts-node ./node_modules/typeorm/cli.js migration:run",
