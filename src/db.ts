@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { createConnection, Connection, Repository, Not, In } from 'typeorm';
+import { createConnection, getConnectionOptions, getConnection, Connection, Repository, Not, In } from 'typeorm';
 import { Person, Suite, Buzzer, Buzz, TwilioLine } from './models';
 
 export interface DB {
@@ -11,8 +11,19 @@ export interface DB {
 	Lines: Repository<TwilioLine>;
 }
 
-export async function initDB(): Promise<DB> {
-	const conn = await createConnection();
+let numAttempts = 0;
+
+export async function initDB(overrides = {}): Promise<DB> {
+	console.log('Connection attempt', numAttempts);
+	if (numAttempts === 0) {
+		const connectionOptions = await getConnectionOptions();
+		console.log(`Connecting with: ${JSON.stringify(connectionOptions)}`);
+		var conn = await createConnection(connectionOptions);
+		console.log('Connected!');
+		numAttempts++;
+	} else {
+		var conn = getConnection();
+	}
 	return {
 		connection: conn,
 		People: conn.getRepository(Person),
@@ -22,6 +33,24 @@ export async function initDB(): Promise<DB> {
 		Lines: conn.getRepository(TwilioLine)
 	};
 }
+
+function withDB() {
+	let db: DB;
+	return async function(req, res, next) {
+		if (!db) {
+			try {
+				db = await initDB();
+			} catch (e) {
+				console.error(`DB ERROR`, e);
+				return res.sendStatus(500);
+			}
+		}
+		req.db = db;
+		next();
+	};
+}
+
+export const dbMiddleware = withDB();
 
 export async function lookupLine(db: DB, phoneNumber: string): Promise<TwilioLine> {
 	const line = await db.Lines.findOne({ where: { phoneNumber } });

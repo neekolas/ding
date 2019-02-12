@@ -2,10 +2,19 @@
 	"name": "dingdong",
 	"version": "1.0.0",
 	"description": "",
-	"main": "handler.js",
+	"main": "dist/index.js",
+	"engines": {
+		"node": "8"
+	},
 	"scripts": {
-		"dev": "ts-node-dev ./src/index.ts",
-		"start": "ts-node ./src/index.ts",
+		"dev": "ts-node-dev ./src/server.ts",
+		"build": "tsc",
+		"serve": "npm run build && firebase serve --only functions",
+		"shell": "npm run build && firebase functions:shell",
+		"start": "npm run shell",
+		"clean": "rm -rf ./dist",
+		"deploy": "npm run clean && firebase deploy --only functions",
+		"logs": "firebase functions:log",
 		"migrations:up": "ts-node ./node_modules/typeorm/cli.js migration:run",
 		"migrations:down": "ts-node ./node_modules/typeorm/cli.js migration:revert",
 		"migrations:generate": "ts-node ./node_modules/typeorm/cli.js migration:generate -n Auto",
@@ -21,17 +30,22 @@
 		"apollo-server-express": "^2.3.3",
 		"body-parser": "^1.18.3",
 		"express": "^4.16.4",
+		"firebase-admin": "^7.0.0",
+		"firebase-functions": "^2.2.0",
 		"graphql": "^14.1.1",
 		"pg": "^7.8.0",
 		"reflect-metadata": "^0.1.13",
 		"ts-node": "^8.0.2",
+		"tslib": "^1.9.3",
 		"twilio": "^3.26.1",
 		"typeorm": "^0.2.12"
 	},
 	"devDependencies": {
-		"@types/google__maps": "^0.5.2",
 		"@types/express": "^4.16.1",
+		"@types/google__maps": "^0.5.2",
+		"@types/graphql": "^14.0.5",
 		"@types/node": "^10.12.20",
+		"firebase-tools": "^6.3.1",
 		"ts-node-dev": "^1.0.0-pre.32",
 		"typescript": "^3.2.4"
 	}

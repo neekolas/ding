@@ -5,10 +5,10 @@ default: # default connection
   password: 'postgres'
   database: 'postgres'
   type: postgres
-  synchronize: false,
+  synchronize: true,
   entities:
-    - src/models/*.ts
+    - dist/models/*.js
   migrations:
-    - src/migrations/*.ts
+    - dist/migrations/*.js
   cli:
     migrationsDir: src/migrations
