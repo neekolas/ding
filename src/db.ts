@@ -11,19 +11,12 @@ export interface DB {
 	Lines: Repository<TwilioLine>;
 }
 
-let numAttempts = 0;
-
 export async function initDB(overrides = {}): Promise<DB> {
-	console.log('Connection attempt', numAttempts);
-	if (numAttempts === 0) {
-		const connectionOptions = await getConnectionOptions();
-		console.log(`Connecting with: ${JSON.stringify(connectionOptions)}`);
-		var conn = await createConnection(connectionOptions);
-		console.log('Connected!');
-		numAttempts++;
-	} else {
-		var conn = getConnection();
-	}
+	const connectionOptions = await getConnectionOptions();
+	console.log(`Connecting with:\n${JSON.stringify(connectionOptions)}`);
+	var conn = await createConnection(connectionOptions);
+	console.log('Connected!');
+
 	return {
 		connection: conn,
 		People: conn.getRepository(Person),
