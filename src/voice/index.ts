@@ -37,7 +37,7 @@ async function buzzMiddleware(req: BuzzRequest, res, next) {
 	const { params, db } = req;
 	const { buzzId } = params;
 	try {
-		req.buzz = await db.Buzzes.findOneOrFail(buzzId);
+		req.buzz = await db.Buzzes.findOneOrFail(buzzId, { relations: ['suite'] });
 		next();
 	} catch (e) {
 		console.error(e);
@@ -84,7 +84,7 @@ export default function() {
 			});
 
 			gather.say('Say the name of the person you are trying to see or enter an unlock code');
-
+			console.log(`Sending TWIML\n${twiml.toString()}`);
 			res.end(twiml.toString());
 		} catch (e) {
 			res.status(500);
@@ -94,7 +94,7 @@ export default function() {
 
 	// Unlock Route
 	app.post('/buzz/:buzzId/unlock', buzzMiddleware, function(req: BuzzRequest, res) {
-		const { twiml, body } = req;
+		const { twiml, body, buzz } = req;
 		const { Digits } = body;
 		twiml.say(`You entered code ${Digits.split().join(' ')}`);
 		res.end(twiml.toString());
