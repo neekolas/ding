@@ -153,9 +153,9 @@ export class PersonSuite {
 	@Column()
 	role: string;
 
-	@ManyToOne(type => Suite, suite => suite.people)
+	@ManyToOne(type => Suite, suite => suite.people, { onDelete: 'CASCADE' })
 	suite: Suite;
 
-	@ManyToOne(type => Person, person => person.suites)
+	@ManyToOne(type => Person, person => person.suites, { onDelete: 'CASCADE' })
 	person: Person;
 }
