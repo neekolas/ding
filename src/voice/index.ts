@@ -15,7 +15,7 @@ export type VoiceRequest = Request & {
 function twimlMiddleware(req: VoiceRequest, res, next) {
 	req.twiml = new VoiceResponse();
 	res.setHeader('Content-Type', 'text/xml');
-	console.log(JSON.stringify(req.body));
+	console.log(req.url, '\n', JSON.stringify(req.body));
 	next();
 }
 
@@ -68,7 +68,7 @@ export default function() {
 	});
 
 	// Activate Route
-	app.post('/activate-suite', async function(req: VoiceRequest, res) {
+	app.get('/activate-suite', async function(req: VoiceRequest, res) {
 		const { twiml } = req;
 		try {
 			const gather = twiml.gather({
