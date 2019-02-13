@@ -98,7 +98,7 @@ export default function() {
 				twiml.say('Could not find match');
 				twiml.redirect(ACTIVATE_SUITE);
 			} else {
-				suite.activationCode = null;
+				suite.activationCode = undefined;
 				suite.buzzer.phoneNumber = From;
 				await Promise.all([db.Buzzers.save(suite.buzzer), db.Suites.save(suite)]);
 				twiml.say(`Activated suite`);
