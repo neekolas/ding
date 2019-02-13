@@ -75,7 +75,7 @@ export default function() {
 
 			const gather = twiml.gather({
 				numDigits: 4,
-				action: UNLOCK,
+				action: `/voice/buzz/${buzz.id}/unlock`,
 				hints: buildHints(owners),
 				input: 'dtmf speech',
 				speechTimeout: 'auto',
