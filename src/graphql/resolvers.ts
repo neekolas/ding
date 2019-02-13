@@ -1,8 +1,8 @@
 import { ApolloServer } from 'apollo-server-express';
-import { DB, upsertPerson, findAvailableLine } from './db';
-import { lookupAddress, findCountry, lookupPlace } from './maps';
+import { DB, upsertPerson, findAvailableLine } from '../db';
+import { lookupAddress, findCountry, lookupPlace } from '../maps';
 import { AddressComponent } from '@google/maps';
-import { Person } from './models';
+import { Person } from '../models';
 
 export interface ResolverContext {
 	db: DB;
@@ -16,7 +16,7 @@ export interface CreateSuiteArgs {
 }
 
 const generateActivationCode = () => {
-	return (Math.random() * 10000).toFixed(0);
+	return (Math.random() * 99999).toFixed(0);
 };
 
 export default {
@@ -46,7 +46,7 @@ export default {
 				};
 			});
 		},
-		async addressSearch(parent, args: { query: string }, context, info) {
+		async addressSearch(parent, args: { query: string }, context: ResolverContext, info) {
 			const results = await lookupAddress(args.query);
 
 			return results.map(result => {

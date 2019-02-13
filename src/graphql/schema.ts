@@ -19,7 +19,7 @@ export default gql`
 		id: ID!
 		address: String
 		unit: String!
-		code: String
+		activationCode: String
 		placeID: String!
 		buzzerPhoneNumber: String
 		twilioPhoneNumber: String!

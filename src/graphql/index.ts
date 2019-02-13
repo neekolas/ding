@@ -3,8 +3,8 @@ import { ApolloServer } from 'apollo-server-express';
 
 import typeDefs from './schema';
 import resolvers from './resolvers';
-import { dbMiddleware, DB } from './db';
-import { userMiddleware } from './auth';
+import { dbMiddleware, DB } from '../db';
+import { userMiddleware } from '../auth';
 
 export default function(path = '/') {
 	const app = express();
