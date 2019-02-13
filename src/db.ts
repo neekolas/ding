@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { createConnection, getConnectionOptions, getConnection, Connection, Repository, Not, In } from 'typeorm';
-import { Person, Suite, Buzzer, Buzz, TwilioLine } from './models';
+import { Person, Suite, Buzzer, Buzz, TwilioLine, PersonSuite } from './models';
 
 export interface DB {
 	connection: Connection;
@@ -9,6 +9,7 @@ export interface DB {
 	Buzzers: Repository<Buzzer>;
 	Buzzes: Repository<Buzz>;
 	Lines: Repository<TwilioLine>;
+	PersonSuites: Repository<PersonSuite>;
 }
 
 export async function initDB(overrides = {}): Promise<DB> {
@@ -21,7 +22,8 @@ export async function initDB(overrides = {}): Promise<DB> {
 		Suites: conn.getRepository(Suite),
 		Buzzers: conn.getRepository(Buzzer),
 		Buzzes: conn.getRepository(Buzz),
-		Lines: conn.getRepository(TwilioLine)
+		Lines: conn.getRepository(TwilioLine),
+		PersonSuites: conn.getRepository(PersonSuite)
 	};
 }
 

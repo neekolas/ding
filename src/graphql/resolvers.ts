@@ -2,7 +2,7 @@ import { ApolloServer } from 'apollo-server-express';
 import { DB, upsertPerson, findAvailableLine } from '../db';
 import { lookupAddress, findCountry, lookupPlace } from '../maps';
 import { AddressComponent } from '@google/maps';
-import { Person } from '../models';
+import { Person, PersonSuiteRole } from '../models';
 
 export interface ResolverContext {
 	db: DB;
@@ -34,7 +34,6 @@ export default {
 			if (!user) {
 				return null;
 			}
-			console.log(user);
 			const { nodeID, firstName, lastName, phoneNumber } = user;
 			return { id: nodeID, firstName: firstName || '', lastName: lastName || '', phoneNumber };
 		},
@@ -70,7 +69,7 @@ export default {
 	Mutation: {
 		async createSuite(parent, args: CreateSuiteArgs, context: ResolverContext) {
 			const { placeID, unit } = args;
-			const { db } = context;
+			const { db, user } = context;
 			let buzzer = await db.Buzzers.findOne({ where: { placeID } });
 			if (!buzzer) {
 				const place = await lookupPlace(placeID);
@@ -92,7 +91,7 @@ export default {
 				activationCode: generateActivationCode(),
 				line
 			});
-
+			await db.PersonSuites.insert({ person: user, suite, role: PersonSuiteRole.OWNER });
 			return {
 				id: suite.nodeID,
 				address: buzzer.address,

@@ -1,6 +1,10 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, PrimaryColumn, Generated, Index } from 'typeorm';
 
-//
+export enum PersonSuiteRole {
+	OWNER = 'owner',
+	RESIDENT = 'resident',
+	VISITOR = 'visitor'
+}
 
 @Entity()
 export class Person {
@@ -150,8 +154,12 @@ export class PersonSuite {
 	@PrimaryGeneratedColumn()
 	id: number;
 
-	@Column()
-	role: string;
+	@Column({
+		type: 'enum',
+		enum: PersonSuiteRole,
+		default: PersonSuiteRole.OWNER
+	})
+	role: PersonSuiteRole;
 
 	@ManyToOne(type => Suite, suite => suite.people, { onDelete: 'CASCADE' })
 	suite: Suite;
