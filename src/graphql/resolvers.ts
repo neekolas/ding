@@ -42,6 +42,7 @@ export default {
 					address,
 					placeID,
 					unit: result.unit,
+					activationCode: result.activationCode,
 					twilioPhoneNumber: result.line.phoneNumber
 				};
 			});
@@ -88,6 +89,7 @@ export default {
 				id: suite.nodeID,
 				address: buzzer.address,
 				unit,
+				activationCode: suite.activationCode,
 				placeID,
 				country: buzzer.country
 			};
