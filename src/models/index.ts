@@ -12,14 +12,11 @@ export class Person {
 	@Generated('uuid')
 	nodeID: string;
 
-	@Column()
+	@Column({ nullable: true })
 	firstName: string;
 
-	@Column()
-	lastName: string;
-
 	@Column({ nullable: true })
-	auth0ID: string;
+	lastName: string;
 
 	@Column({ nullable: true })
 	phoneNumber: string;

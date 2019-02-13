@@ -2,10 +2,12 @@ import { ApolloServer } from 'apollo-server-express';
 import { DB, upsertPerson, findAvailableLine } from './db';
 import { lookupAddress, findCountry, lookupPlace } from './maps';
 import { AddressComponent } from '@google/maps';
+import { Person } from './models';
 
 export interface ResolverContext {
 	db: DB;
 	headers: { [k: string]: string };
+	user?: Person;
 }
 
 export interface CreateSuiteArgs {
@@ -19,13 +21,14 @@ const generateActivationCode = () => {
 
 export default {
 	Query: {
-		me(parent, args, context, info) {
-			return {
-				id: '1',
-				firstName: 'Nick',
-				lastName: 'Molnar',
-				phoneNumber: '+13107746478'
-			};
+		me(parent, args, context: ResolverContext) {
+			const { user } = context;
+			if (!user) {
+				return null;
+			}
+			console.log(user);
+			const { nodeID, firstName, lastName, phoneNumber } = user;
+			return { id: nodeID, firstName: firstName || '', lastName: lastName || '', phoneNumber };
 		},
 		async suites(parent, args, context: ResolverContext, info) {
 			const results = await context.db.Suites.find({
