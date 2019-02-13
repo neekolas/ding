@@ -96,7 +96,9 @@ export default function() {
 	app.post('/buzz/:buzzId/unlock', buzzMiddleware, function(req: BuzzRequest, res) {
 		const { twiml, body, buzz } = req;
 		const { Digits } = body;
-		twiml.say(`You entered code ${Digits.split().join(' ')}`);
+		if (Digits) {
+			twiml.say(`You entered code ${Digits.split().join(' ')}`);
+		}
 		res.end(twiml.toString());
 	});
 
