@@ -100,6 +100,15 @@ export default {
 
 			return { ...person, id: person.nodeID };
 		},
+		async deleteSuite(parent, args: { [suiteID: string]: any }, context: ResolverContext, info) {
+			const { db } = context;
+			const suite = await db.Suites.findOne({ where: { nodeID: args.suiteID } });
+			if (!suite) {
+				throw new Error('Suite not found');
+			}
+			await db.Suites.remove(suite);
+			return true;
+		},
 		async createLine(parent, { phoneNumber, country }, context: ResolverContext) {
 			const existing = await context.db.Lines.findOne({ phoneNumber });
 			if (!existing) {
