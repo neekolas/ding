@@ -9,7 +9,7 @@ exports.graphql = functions.runWith({ memory: '1GB' }).https.onRequest(createGra
 
 function setupEnv() {
 	let cfg: { [k: string]: any } = functions.config();
-	var { maps, db } = cfg;
+	var { maps, db, twilio } = cfg;
 	if (maps) {
 		process.env.MAPS_API_KEY = maps.api_key;
 	}
@@ -17,6 +17,10 @@ function setupEnv() {
 		Object.keys(db).forEach(k => {
 			process.env[`TYPEORM_${k.toUpperCase()}`] = db[k];
 		});
-		console.log('Initialized env');
+	}
+	if (twilio) {
+		Object.keys(twilio).forEach(k => {
+			process.env[`TWILIO_${k.toUpperCase()}`] = twilio[k];
+		});
 	}
 }

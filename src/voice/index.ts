@@ -3,8 +3,10 @@ import bodyParser from 'body-parser';
 import VoiceResponse = require('twilio/lib/twiml/VoiceResponse');
 import * as qs from 'querystring';
 
-import { DB, dbMiddleware, lookupLine, lookupBuzzer, findSuiteByLineAndBuzzer } from '../db';
-import { ACTIVATE_SUITE, ACTIVATE_SUITE_CALLBACK, LANDING } from './routes';
+import { DB, dbMiddleware, lookupLine, lookupBuzzer, findSuiteByLineAndBuzzer, createBuzz } from '../db';
+import { ACTIVATE_SUITE, ACTIVATE_SUITE_CALLBACK, LANDING, UNLOCK } from './routes';
+import { PersonSuiteRole, PersonSuite, Buzz } from '../models';
+import twilioClient from './twilio';
 
 export type VoiceRequest = Request & {
 	twiml: VoiceResponse;
@@ -12,11 +14,35 @@ export type VoiceRequest = Request & {
 	db: DB;
 };
 
+export type BuzzRequest = VoiceRequest & {
+	buzz: Buzz;
+};
+
 function twimlMiddleware(req: VoiceRequest, res, next) {
 	req.twiml = new VoiceResponse();
 	res.setHeader('Content-Type', 'text/xml');
 	console.log(req.url, '\n', JSON.stringify(req.body));
 	next();
+}
+
+function buildHints(owners: PersonSuite[]): string {
+	return owners
+		.map(owner => {
+			return [owner.person.firstName, owner.person.lastName].filter(p => p).join(' ');
+		})
+		.join(' ');
+}
+
+async function buzzMiddleware(req: BuzzRequest, res, next) {
+	const { params, db } = req;
+	const { buzzId } = params;
+	try {
+		req.buzz = await db.Buzzes.findOneOrFail(buzzId);
+		next();
+	} catch (e) {
+		console.error(e);
+		return res.sendStatus(401);
+	}
 }
 
 export default function() {
@@ -34,20 +60,27 @@ export default function() {
 				return res.redirect(ACTIVATE_SUITE);
 			}
 			const line = await lookupLine(db, body.To);
-
-			console.log(`LINE: ${line}\nBUZZER: ${buzzer}`);
-			const suite = findSuiteByLineAndBuzzer(db, line.id, buzzer.id);
+			const suite = await findSuiteByLineAndBuzzer(db, line.id, buzzer.id);
 			if (!suite) {
 				return res.redirect(ACTIVATE_SUITE);
 			}
 
+			const [owners, buzz] = await Promise.all([
+				db.PersonSuites.find({
+					where: { suite, role: PersonSuiteRole.OWNER },
+					relations: ['person']
+				}),
+				createBuzz(db, body.CallSid, suite)
+			]);
+
 			const gather = twiml.gather({
 				numDigits: 4,
-				action: './unlock',
+				action: UNLOCK,
+				hints: buildHints(owners),
 				input: 'dtmf speech',
 				speechTimeout: 'auto',
 				timeout: 10,
-				partialResultCallback: '/voice/speach'
+				partialResultCallback: `/voice/buzz/${buzz.id}/speach`
 			});
 
 			gather.say('Say the name of the person you are trying to see or enter an unlock code');
@@ -60,11 +93,17 @@ export default function() {
 	});
 
 	// Unlock Route
-	app.post('/unlock', function(req: VoiceRequest, res) {
+	app.post('/buzz/:buzzId/unlock', buzzMiddleware, function(req: BuzzRequest, res) {
 		const { twiml, body } = req;
 		const { Digits } = body;
 		twiml.say(`You entered code ${Digits.split().join(' ')}`);
 		res.end(twiml.toString());
+	});
+
+	app.post('/buzz/:buzzId/speach', buzzMiddleware, async function(req: BuzzRequest, res) {
+		const { buzz, db, body } = req;
+		const { UnstableSpeechResult } = body;
+		console.log('Unstable speech result', UnstableSpeechResult);
 	});
 
 	// Activate Route
@@ -102,7 +141,7 @@ export default function() {
 				suite.buzzer.phoneNumber = From;
 				await Promise.all([
 					db.Buzzers.save(suite.buzzer),
-					db.Suites.update(suite.id, { activationCode: null })
+					db.Suites.update(suite.id, { activationCode: undefined })
 				]);
 				twiml.say(`Activated suite`);
 			}

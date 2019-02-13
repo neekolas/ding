@@ -90,6 +90,10 @@ export async function upsertPerson(db: DB, phoneNumber: string): Promise<Person>
 	return person;
 }
 
+export function createBuzz(db: DB, nodeID: string, suite: Suite): Promise<Buzz> {
+	return db.Buzzes.save({ suite, callStart: new Date(), nodeID });
+}
+
 export function findSuiteByLineAndBuzzer(db: DB, lineID: number, buzzerID: number): Promise<Suite | undefined> {
 	return db.Suites.findOne({ where: { line: { id: lineID }, buzzer: { id: buzzerID } } });
 }
