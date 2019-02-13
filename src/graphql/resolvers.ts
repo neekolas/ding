@@ -15,8 +15,16 @@ export interface CreateSuiteArgs {
 	placeID: string;
 }
 
+function formatNumberLength(num, length) {
+	var r = '' + num;
+	while (r.length < length) {
+		r = '0' + r;
+	}
+	return r;
+}
+
 const generateActivationCode = () => {
-	return (Math.random() * 99999).toFixed(0);
+	return formatNumberLength(Math.floor(Math.random() * 99999), 5);
 };
 
 export default {
