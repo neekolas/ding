@@ -1,9 +1,7 @@
-import { ApolloServer } from 'apollo-server-express';
-import { DB, upsertPerson, findAvailableLine } from '../db';
-import { lookupAddress, findCountry, lookupPlace } from '../maps';
-import { AddressComponent } from '@google/maps';
-import { Person, PersonSuiteRole } from '../models';
-import { generateActivationCode } from './utils';
+import { DB, findAvailableLine } from '../../db';
+import { lookupAddress, findCountry, lookupPlace } from '../../maps';
+import { Person, PersonSuiteRole, Suite, Buzzer } from '../../models';
+import { generateActivationCode } from '../utils';
 
 export interface ResolverContext {
 	db: DB;
@@ -37,7 +35,33 @@ function formatPerson({ nodeID, firstName = '', lastName = '', phoneNumber = '' 
 	};
 }
 
+function mergeSuiteAndBuzzer(
+	{ id, nodeID, unit, activationCode, line }: Suite,
+	{ address, placeID, country, phoneNumber: buzzerPhoneNumber }: Buzzer
+) {
+	return {
+		_id: id,
+		id: nodeID,
+		address: address,
+		unit,
+		buzzerPhoneNumber,
+		twilioPhoneNumber: line ? line.phoneNumber : '',
+		activationCode: activationCode,
+		placeID,
+		country: country
+	};
+}
+
 export default {
+	Suite: {
+		async owners({ _id: id }, args, { db }: ResolverContext) {
+			const personSuites = await db.PersonSuites.find({
+				where: { suite: { id }, role: PersonSuiteRole.OWNER },
+				relations: ['person']
+			});
+			return personSuites.map(ps => formatPerson(ps.person));
+		}
+	},
 	Query: {
 		me(parent, args, context: ResolverContext) {
 			const { user } = context;
@@ -51,17 +75,11 @@ export default {
 				relations: ['buzzer', 'line']
 			});
 			console.log(`Got ${results.length} results`, results);
-			return results.map(result => {
-				const { address, placeID } = result.buzzer;
-				return {
-					id: result.nodeID,
-					address,
-					placeID,
-					unit: result.unit,
-					activationCode: result.activationCode,
-					twilioPhoneNumber: result.line.phoneNumber
-				};
-			});
+			return results.map(result => mergeSuiteAndBuzzer(result, result.buzzer));
+		},
+		async suite(parent, { id }, { db, user }: ResolverContext) {
+			const suite = await db.Suites.findOneOrFail({ where: { nodeID: id }, relations: ['buzzer', 'line'] });
+			return mergeSuiteAndBuzzer(suite, suite.buzzer);
 		},
 		async addressSearch(parent, args: { query: string }, context: ResolverContext, info) {
 			const results = await lookupAddress(args.query);
@@ -101,14 +119,7 @@ export default {
 				line
 			});
 			await db.PersonSuites.insert({ person: user, suite, role: PersonSuiteRole.OWNER });
-			return {
-				id: suite.nodeID,
-				address: buzzer.address,
-				unit,
-				activationCode: suite.activationCode,
-				placeID,
-				country: buzzer.country
-			};
+			return mergeSuiteAndBuzzer(suite, buzzer);
 		},
 		async updateUser(parent, args: UpdateNameArgs, context: ResolverContext, info) {
 			const { user, db } = context;

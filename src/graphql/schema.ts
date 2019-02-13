@@ -37,6 +37,7 @@ export default gql`
 	type Query {
 		me: Person!
 		suites: [Suite]
+		suite(id: ID!): Suite!
 		addressSearch(query: String!): [PlaceResult]
 	}
 
