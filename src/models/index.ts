@@ -120,7 +120,7 @@ export class Buzz {
 	@Column('timestamp')
 	callStart: Date;
 
-	@Column('timestamp')
+	@Column('timestamp', { nullable: true })
 	callEnd: Date;
 
 	@OneToMany(type => BuzzEvent, ev => ev.buzz)
