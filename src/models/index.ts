@@ -13,13 +13,13 @@ export class Person {
 	nodeID: string;
 
 	@Column({ nullable: true })
-	firstName: string;
+	firstName: string | null;
 
 	@Column({ nullable: true })
-	lastName: string;
+	lastName: string | null;
 
 	@Column({ nullable: true })
-	phoneNumber: string;
+	phoneNumber: string | null;
 
 	@Column({ nullable: true })
 	slackUser: string;
@@ -77,13 +77,13 @@ export class Suite {
 	nodeID: string;
 
 	@Column({ nullable: true })
-	buzzerCode: string;
+	buzzerCode: string | null;
 
 	@Column()
 	unit: string;
 
 	@Column({ nullable: true })
-	activationCode: string;
+	activationCode: string | null;
 
 	@Column({ default: false })
 	isActivated: boolean;

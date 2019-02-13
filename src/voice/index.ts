@@ -92,16 +92,22 @@ export default function() {
 		const { twiml, body, db } = req;
 		const { Digits: activationCode, From } = body;
 		twiml.say(`You entered ${activationCode}`);
-		const suite = await db.Suites.findOne({ where: { activationCode }, relations: ['buzzer'] });
-		if (!suite) {
-			twiml.say('Could not find match');
-			twiml.redirect(ACTIVATE_SUITE);
-		} else {
-			suite.buzzer.phoneNumber = From;
-			db.Buzzers.save(suite.buzzer);
-			twiml.say(`Activated suite`);
+		try {
+			const suite = await db.Suites.findOne({ where: { activationCode }, relations: ['buzzer'] });
+			if (!suite) {
+				twiml.say('Could not find match');
+				twiml.redirect(ACTIVATE_SUITE);
+			} else {
+				suite.activationCode = null;
+				suite.buzzer.phoneNumber = From;
+				await Promise.all([db.Buzzers.save(suite.buzzer), db.Suites.save(suite)]);
+				twiml.say(`Activated suite`);
+			}
+			res.end(twiml.toString());
+		} catch (e) {
+			console.error(e);
+			res.sendStatus(500);
 		}
-		res.end(twiml.toString());
 	});
 
 	return app;
