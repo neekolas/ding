@@ -3,11 +3,12 @@ import { DB, upsertPerson, findAvailableLine } from '../db';
 import { lookupAddress, findCountry, lookupPlace } from '../maps';
 import { AddressComponent } from '@google/maps';
 import { Person, PersonSuiteRole } from '../models';
+import { generateActivationCode } from './utils';
 
 export interface ResolverContext {
 	db: DB;
 	headers: { [k: string]: string };
-	user?: Person;
+	user: Person;
 }
 
 export interface CreateSuiteArgs {
@@ -15,17 +16,26 @@ export interface CreateSuiteArgs {
 	placeID: string;
 }
 
-function formatNumberLength(num, length) {
-	var r = '' + num;
-	while (r.length < length) {
-		r = '0' + r;
-	}
-	return r;
+export interface UpdateNameArgs {
+	firstName?: string;
+	lastName?: string;
 }
 
-const generateActivationCode = () => {
-	return formatNumberLength(Math.floor(Math.random() * 99999), 5);
-};
+export interface GraphQLPerson {
+	id: string;
+	firstName?: string;
+	lastName?: string;
+	phoneNumber: string;
+}
+
+function formatPerson({ nodeID, firstName = '', lastName = '', phoneNumber = '' }: Person): GraphQLPerson {
+	return {
+		firstName,
+		lastName,
+		id: nodeID,
+		phoneNumber
+	};
+}
 
 export default {
 	Query: {
@@ -34,8 +44,7 @@ export default {
 			if (!user) {
 				return null;
 			}
-			const { nodeID, firstName, lastName, phoneNumber } = user;
-			return { id: nodeID, firstName: firstName || '', lastName: lastName || '', phoneNumber };
+			return formatPerson(user);
 		},
 		async suites(parent, args, context: ResolverContext, info) {
 			const results = await context.db.Suites.find({
@@ -101,11 +110,18 @@ export default {
 				country: buzzer.country
 			};
 		},
-		async createPerson(parent, args: { [k: string]: any }, context: ResolverContext, info) {
-			console.log(`Creating person with ${JSON.stringify(args)}`);
-			const person = await upsertPerson(context.db, args.phoneNumber);
+		async updateUser(parent, args: UpdateNameArgs, context: ResolverContext, info) {
+			const { user, db } = context;
+			const { firstName, lastName } = args;
+			if (firstName !== undefined) {
+				user.firstName = firstName;
+			}
+			if (lastName !== undefined) {
+				user.lastName = lastName;
+			}
+			await db.People.save(user);
 
-			return { ...person, id: person.nodeID };
+			return formatPerson(user);
 		},
 		async deleteSuite(parent, args: { [suiteID: string]: any }, context: ResolverContext, info) {
 			const { db } = context;
