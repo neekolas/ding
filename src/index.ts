@@ -4,8 +4,8 @@ setupEnv();
 import createVoiceApp from './voice';
 import createGraphQlApp from './graphql';
 
-exports.voice = functions.https.onRequest(createVoiceApp());
-exports.graphql = functions.https.onRequest(createGraphQlApp());
+exports.voice = functions.runWith({ memory: '1GB' }).https.onRequest(createVoiceApp());
+exports.graphql = functions.runWith({ memory: '1GB' }).https.onRequest(createGraphQlApp());
 
 function setupEnv() {
 	let cfg: { [k: string]: any } = functions.config();
