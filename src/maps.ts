@@ -29,7 +29,6 @@ export function findCountry(addressComponents: AddressComponent[]): string {
 }
 
 export async function lookupAddress(address: string): Promise<PlaceSearchResult[]> {
-	console.log('Looking up', address);
 	const response = await client.places({ query: address }).asPromise();
 
 	const { results } = response.json;
@@ -42,7 +41,6 @@ export async function lookupPhoto(obj: PlaceSearchResult): Promise<string | null
 		let photoref = obj.photos[0].photo_reference;
 
 		const result = await client.placesPhoto({ photoreference: photoref, maxheight: 250 }).asPromise();
-		console.log(result);
 		return result.json;
 	}
 	return null;

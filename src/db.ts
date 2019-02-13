@@ -13,9 +13,7 @@ export interface DB {
 
 export async function initDB(overrides = {}): Promise<DB> {
 	const connectionOptions = await getConnectionOptions();
-	console.log(`Connecting with:\n${JSON.stringify(connectionOptions)}`);
 	var conn = await createConnection(connectionOptions);
-	console.log('Connected!');
 
 	return {
 		connection: conn,
@@ -68,7 +66,6 @@ export async function lookupPerson(db: DB, phoneNumber: string): Promise<Person 
 export async function findAvailableLine(db: DB, buzzerId: number) {
 	const suites = await db.Suites.find({ where: { buzzer: { id: buzzerId } }, relations: ['line'] });
 	if (suites.length) {
-		console.log(`Has suites`, suites);
 		const lineIDs = suites.map(suite => suite.line.id);
 		return db.Lines.findOne({ id: Not(In(lineIDs)) });
 	} else {

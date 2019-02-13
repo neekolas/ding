@@ -16,7 +16,7 @@ export default function() {
 	app.use(bodyParser.urlencoded({ extended: true }), function(req: VoiceRequest, res, next) {
 		req.twiml = new VoiceResponse();
 		res.setHeader('Content-Type', 'text/xml');
-		console.log(req.body);
+		console.log(JSON.stringify(req.body));
 		next();
 	});
 
