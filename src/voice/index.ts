@@ -52,11 +52,11 @@ async function buzzMiddleware(req: BuzzRequest, res, next) {
 }
 
 function joinFirstAndLastName(person: Person) {
-	return [person.firstName, person.lastName].filter(p => p).join(' ');
+	return [person.firstName, person.lastName, person.nickname].filter(p => p).join(' ');
 }
 
 function findOwnerByName(text: string, owners: Person[]): Person | null {
-	owners = owners.filter(owner => owner.firstName || owner.lastName);
+	owners = owners.filter(owner => owner.firstName || owner.lastName || owner.nickname);
 	const fullHit = owners.find(p => RegExp(joinFirstAndLastName(p), 'ig').test(text));
 	if (fullHit) {
 		return fullHit;
@@ -65,9 +65,13 @@ function findOwnerByName(text: string, owners: Person[]): Person | null {
 	if (firstNameHit.length === 1) {
 		return firstNameHit[0];
 	}
-	const lastNameHit = owners.filter(p => RegExp(p.firstName || '', 'ig').test(text));
+	const lastNameHit = owners.filter(p => RegExp(p.lastName || '', 'ig').test(text));
 	if (lastNameHit.length === 1) {
 		return lastNameHit[0];
+	}
+	const nicknameHit = owners.filter(p => RegExp(p.nickname || '', 'ig').test(text));
+	if (nicknameHit.length === 1) {
+		return nicknameHit[0];
 	}
 	return null;
 }
