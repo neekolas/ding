@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { createConnection, getConnectionOptions, getConnection, Connection, Repository, Not, In } from 'typeorm';
-import { Person, Suite, Buzzer, Buzz, TwilioLine, PersonSuite } from './models';
+import { Person, Suite, Buzzer, Buzz, TwilioLine, PersonSuite, PersonSuiteRole } from './models';
 
 export interface DB {
 	connection: Connection;
@@ -88,6 +88,14 @@ export async function upsertPerson(db: DB, phoneNumber: string): Promise<Person>
 		throw new Error('Create failed');
 	}
 	return person;
+}
+
+export async function findBuzzOwners(db: DB, buzz: Buzz): Promise<Person[]> {
+	const ps = await db.PersonSuites.find({
+		where: { suite: buzz.suite, role: PersonSuiteRole.OWNER },
+		relations: ['person']
+	});
+	return ps.map(p => p.person);
 }
 
 export function createBuzz(db: DB, nodeID: string, suite: Suite): Promise<Buzz> {

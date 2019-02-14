@@ -3,9 +3,17 @@ import bodyParser from 'body-parser';
 import VoiceResponse = require('twilio/lib/twiml/VoiceResponse');
 import * as qs from 'querystring';
 
-import { DB, dbMiddleware, lookupLine, lookupBuzzer, findSuiteByLineAndBuzzer, createBuzz } from '../db';
+import {
+	DB,
+	dbMiddleware,
+	lookupLine,
+	lookupBuzzer,
+	findSuiteByLineAndBuzzer,
+	createBuzz,
+	findBuzzOwners
+} from '../db';
 import { ACTIVATE_SUITE, ACTIVATE_SUITE_CALLBACK, LANDING, UNLOCK } from './routes';
-import { PersonSuiteRole, PersonSuite, Buzz } from '../models';
+import { PersonSuiteRole, PersonSuite, Buzz, Person } from '../models';
 import twilioClient from './twilio';
 
 export type VoiceRequest = Request & {
@@ -43,6 +51,26 @@ async function buzzMiddleware(req: BuzzRequest, res, next) {
 		console.error(e);
 		return res.sendStatus(401);
 	}
+}
+
+function joinFirstAndLastName(person: Person) {
+	return [person.firstName, person.lastName].filter(p => p).join(' ');
+}
+
+function findOwnerByName(text: string, owners: Person[]): Person | null {
+	const fullHit = owners.find(p => RegExp(joinFirstAndLastName(p), 'ig').test(text));
+	if (fullHit) {
+		return fullHit;
+	}
+	const firstNameHit = owners.filter(p => RegExp(p.firstName || '', 'ig').test(text));
+	if (firstNameHit.length === 1) {
+		return firstNameHit[0];
+	}
+	const lastNameHit = owners.filter(p => RegExp(p.firstName || '', 'ig').test(text));
+	if (lastNameHit.length === 1) {
+		return lastNameHit[0];
+	}
+	return null;
 }
 
 export default function() {
@@ -103,9 +131,21 @@ export default function() {
 	});
 
 	app.post('/buzz/:buzzId/speach', buzzMiddleware, async function(req: BuzzRequest, res) {
-		const { buzz, db, body } = req;
+		const { buzz, db, body, hostname } = req;
 		const { UnstableSpeechResult } = body;
 		console.log('Unstable speech result', UnstableSpeechResult);
+		const owners = await findBuzzOwners(db, buzz);
+		const match = findOwnerByName(UnstableSpeechResult, owners);
+		if (match) {
+			await twilioClient.redirectCall(buzz.nodeID, `https://${hostname}/voice/dial/${match.phoneNumber}`);
+		}
+	});
+
+	app.post('/dial/:phoneNumber', function(req: VoiceRequest, res) {
+		const { params, twiml } = req;
+		twiml.say('Connecting');
+		twiml.dial(params.phoneNumber);
+		res.end(twiml.toString());
 	});
 
 	// Activate Route
