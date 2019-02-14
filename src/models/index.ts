@@ -23,6 +23,7 @@ export class Person {
 	lastName?: string;
 
 	@Column({ nullable: true })
+	@Index({ unique: true })
 	phoneNumber?: string;
 
 	@Column({ nullable: true })
@@ -150,6 +151,7 @@ export class BuzzEvent {
 }
 
 @Entity()
+@Index(['personId', 'suiteId'], { unique: true })
 export class PersonSuite {
 	@PrimaryGeneratedColumn()
 	id: number;
@@ -163,6 +165,12 @@ export class PersonSuite {
 
 	@ManyToOne(type => Suite, suite => suite.people, { onDelete: 'CASCADE' })
 	suite: Suite;
+
+	@Column()
+	suiteId?: number;
+
+	@Column()
+	personId?: number;
 
 	@ManyToOne(type => Person, person => person.suites, { onDelete: 'CASCADE' })
 	person: Person;

@@ -1,8 +1,6 @@
 import express, { Request } from 'express';
 import bodyParser from 'body-parser';
 import VoiceResponse = require('twilio/lib/twiml/VoiceResponse');
-import * as qs from 'querystring';
-
 import {
 	DB,
 	dbMiddleware,
@@ -14,7 +12,7 @@ import {
 } from '../db';
 import { ACTIVATE_SUITE, ACTIVATE_SUITE_CALLBACK, LANDING, UNLOCK } from './routes';
 import { PersonSuiteRole, PersonSuite, Buzz, Person } from '../models';
-import twilioClient from './twilio';
+import twilioClient from '../twilio';
 
 export type VoiceRequest = Request & {
 	twiml: VoiceResponse;

@@ -1,7 +1,8 @@
-import { DB, findAvailableLine } from '../../db';
+import { DB, findAvailableLine, upsertPerson } from '../../db';
 import { lookupAddress, findCountry, lookupPlace } from '../../maps';
 import { Person, PersonSuiteRole, Suite, Buzzer } from '../../models';
 import { generateActivationCode } from '../utils';
+import { ForbiddenError } from 'apollo-server-core';
 
 export interface ResolverContext {
 	db: DB;
@@ -23,6 +24,11 @@ export interface GraphQLPerson {
 	id: string;
 	firstName?: string;
 	lastName?: string;
+	phoneNumber: string;
+}
+
+export interface InviteOwnerArgs {
+	suiteID: string;
 	phoneNumber: string;
 }
 
@@ -138,6 +144,18 @@ export default {
 			await db.People.save(user);
 
 			return formatPerson(user);
+		},
+		async inviteOwner(parent, { suiteID, phoneNumber }: InviteOwnerArgs, { user, db }: ResolverContext, info) {
+			const suite = await db.Suites.findOneOrFail({ where: { nodeID: suiteID } });
+			const ps = await db.PersonSuites.findOne({
+				where: { person: user, role: PersonSuiteRole.OWNER, suite }
+			});
+			if (!ps) {
+				throw new ForbiddenError('Does not own suite');
+			}
+			const person = await upsertPerson(db, phoneNumber);
+			await db.PersonSuites.insert({ person, suite, role: PersonSuiteRole.OWNER });
+			return true;
 		},
 		async deleteSuite(parent, args: { [suiteID: string]: any }, context: ResolverContext, info) {
 			const { db } = context;
