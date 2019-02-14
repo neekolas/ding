@@ -132,11 +132,17 @@ export default function() {
 		const { buzz, db, body, hostname } = req;
 		const { UnstableSpeechResult } = body;
 		console.log('Unstable speech result', UnstableSpeechResult);
-		const owners = await findBuzzOwners(db, buzz);
-		const match = findOwnerByName(UnstableSpeechResult, owners);
-		if (match) {
-			await twilioClient.redirectCall(buzz.nodeID, `https://${hostname}/voice/dial/${match.phoneNumber}`);
+		try {
+			const owners = await findBuzzOwners(db, buzz);
+			const match = findOwnerByName(UnstableSpeechResult, owners);
+			if (match) {
+				console.log(`Match for ${UnstableSpeechResult}: ${match}`);
+				await twilioClient.redirectCall(buzz.nodeID, `https://${hostname}/voice/dial/${match.phoneNumber}`);
+			}
+		} catch (e) {
+			console.error(e);
 		}
+		res.end();
 	});
 
 	app.post('/dial/:phoneNumber', function(req: VoiceRequest, res) {
