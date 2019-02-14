@@ -119,11 +119,23 @@ export default function() {
 	});
 
 	// Unlock Route
-	app.post('/buzz/:buzzId/unlock', buzzMiddleware, function(req: BuzzRequest, res) {
-		const { twiml, body, buzz } = req;
-		const { Digits } = body;
+	app.post('/buzz/:buzzId/unlock', buzzMiddleware, async function(req: BuzzRequest, res) {
+		const { twiml, body, buzz, db, hostname } = req;
+		const { Digits, SpeechResult } = body;
 		if (Digits) {
 			twiml.say(`You entered code ${Digits.split().join(' ')}`);
+		} else if (SpeechResult) {
+			console.log('Speech Result', SpeechResult);
+			try {
+				const owners = await findBuzzOwners(db, buzz);
+				const match = findOwnerByName(SpeechResult, owners);
+				if (match) {
+					console.log(`Match for ${SpeechResult}: ${match}`);
+					twiml.redirect(`/voice/dial/${match.phoneNumber}`);
+				}
+			} catch (e) {
+				console.error(e);
+			}
 		}
 		res.end(twiml.toString());
 	});
