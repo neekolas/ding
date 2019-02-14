@@ -23,6 +23,7 @@ export async function userMiddleware(req: RequestWithUser, res, next) {
 			req.user = user;
 		} catch (e) {
 			console.error(e);
+			res.sendStatus(401);
 		}
 	}
 	next();
