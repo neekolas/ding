@@ -157,6 +157,20 @@ export default {
 			await db.PersonSuites.insert({ person, suite, role: PersonSuiteRole.OWNER });
 			return true;
 		},
+		async unlinkPerson(parent, { suiteID, personID }, { user, db }: ResolverContext, info) {
+			const suite = await db.Suites.findOneOrFail({ where: { nodeID: suiteID } });
+			// Ensure user is the owner
+			const ps = await db.PersonSuites.count({
+				where: { person: user, role: PersonSuiteRole.OWNER, suite }
+			});
+			if (!ps) {
+				throw new ForbiddenError('Does not own suite');
+			}
+			const person = await db.People.findOneOrFail({ nodeID: personID });
+			const toDelete = await db.PersonSuites.findOneOrFail({ where: { person, suite } });
+			await db.PersonSuites.remove(toDelete);
+			return true;
+		},
 		async deleteSuite(parent, args: { [suiteID: string]: any }, context: ResolverContext, info) {
 			const { db } = context;
 			const suite = await db.Suites.findOne({ where: { nodeID: args.suiteID } });
