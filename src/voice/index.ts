@@ -110,8 +110,8 @@ export default function() {
 				hints: buildHints(owners),
 				input: 'dtmf speech',
 				speechTimeout: 'auto',
-				timeout: 10,
-				partialResultCallback: `/voice/buzz/${buzz.id}/speach`
+				timeout: 10
+				// partialResultCallback: `/voice/buzz/${buzz.id}/speach`
 			});
 
 			gather.say('Say the name of the person you are trying to see or enter an unlock code');
