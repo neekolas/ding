@@ -13,20 +13,21 @@ export type RequestWithUser = Request & {
 };
 
 export async function userMiddleware(req: RequestWithUser, res, next) {
-	const { headers, db } = req;
+	const { headers, db, method } = req;
 
+	if (method === 'OPTIONS') {
+		return next();
+	}
 	if (headers.authorization) {
 		try {
 			const token = headers['authorization'].replace('Bearer ', '');
 			const decoded = await admin.auth().verifyIdToken(token);
 			const user = await upsertPerson(db, decoded.phone_number);
 			req.user = user;
+			return next();
 		} catch (e) {
 			console.log(e);
-			res.sendStatus(401);
 		}
-	} else {
-		res.sendStatus(401);
 	}
-	next();
+	return res.sendStatus(401);
 }
