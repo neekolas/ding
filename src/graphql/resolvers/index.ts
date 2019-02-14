@@ -18,12 +18,14 @@ export interface CreateSuiteArgs {
 export interface UpdateNameArgs {
 	firstName?: string;
 	lastName?: string;
+	nickname?: string;
 }
 
 export interface GraphQLPerson {
 	id: string;
 	firstName?: string;
 	lastName?: string;
+	nickname?: string;
 	phoneNumber: string;
 }
 
@@ -32,10 +34,17 @@ export interface InviteOwnerArgs {
 	phoneNumber: string;
 }
 
-function formatPerson({ nodeID, firstName = '', lastName = '', phoneNumber = '' }: Person): GraphQLPerson {
+function formatPerson({
+	nodeID,
+	firstName = '',
+	lastName = '',
+	phoneNumber = '',
+	nickname = ''
+}: Person): GraphQLPerson {
 	return {
 		firstName,
 		lastName,
+		nickname,
 		id: nodeID,
 		phoneNumber
 	};
@@ -134,12 +143,15 @@ export default {
 		},
 		async updateUser(parent, args: UpdateNameArgs, context: ResolverContext, info) {
 			const { user, db } = context;
-			const { firstName, lastName } = args;
+			const { firstName, lastName, nickname } = args;
 			if (firstName !== undefined) {
 				user.firstName = firstName;
 			}
 			if (lastName !== undefined) {
 				user.lastName = lastName;
+			}
+			if (nickname !== undefined) {
+				user.nickname = nickname;
 			}
 			await db.People.save(user);
 

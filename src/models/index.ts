@@ -23,6 +23,9 @@ export class Person {
 	lastName?: string;
 
 	@Column({ nullable: true })
+	nickname?: string;
+
+	@Column({ nullable: true })
 	@Index({ unique: true })
 	phoneNumber?: string;
 
