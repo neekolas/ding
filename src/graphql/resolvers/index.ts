@@ -59,7 +59,12 @@ export default {
 				where: { suite: { id }, role: PersonSuiteRole.OWNER },
 				relations: ['person']
 			});
-			return personSuites.map(ps => formatPerson(ps.person));
+			return personSuites.map(ps => {
+				return {
+					person: formatPerson(ps.person),
+					role: ps.role
+				};
+			});
 		}
 	},
 	Query: {
