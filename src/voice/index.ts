@@ -56,6 +56,7 @@ function joinFirstAndLastName(person: Person) {
 }
 
 function findOwnerByName(text: string, owners: Person[]): Person | null {
+	owners = owners.filter(owner => owner.firstName || owner.lastName);
 	const fullHit = owners.find(p => RegExp(joinFirstAndLastName(p), 'ig').test(text));
 	if (fullHit) {
 		return fullHit;
