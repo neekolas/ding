@@ -22,9 +22,11 @@ export async function userMiddleware(req: RequestWithUser, res, next) {
 			const user = await upsertPerson(db, decoded.phone_number);
 			req.user = user;
 		} catch (e) {
-			console.error(e);
+			console.log(e);
 			res.sendStatus(401);
 		}
+	} else {
+		res.sendStatus(401);
 	}
 	next();
 }
