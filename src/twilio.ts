@@ -11,6 +11,10 @@ class TwilioClient {
 		this.client = twilio(TWILIO_SID, TWILIO_AUTH_TOKEN);
 	}
 	async redirectCall(callID: string, url: string) {
+		const call = await this.client.calls(callID).fetch();
+		if (call.uri === url || call.status === 'completed') {
+			return call;
+		}
 		return this.client.calls(callID).update({ method: 'POST', url });
 	}
 	async sms(from: string, to: string, body: string) {
