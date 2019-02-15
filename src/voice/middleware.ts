@@ -78,16 +78,15 @@ function validateExpressRequest(request, authToken, opts) {
 			webhookUrl = webhookUrl.replace('%3F', '?');
 		}
 	}
-
+	let body = request.rawBody;
+	if (typeof body !== 'string') {
+		body = body.toString();
+	}
+	console.log(webhookUrl);
 	if (webhookUrl.indexOf('bodySHA256') > 0) {
-		return validateRequestWithBody(
-			authToken,
-			request.headers['x-twilio-signature'],
-			webhookUrl,
-			request.rawBody || {}
-		);
+		return validateRequestWithBody(authToken, request.headers['x-twilio-signature'], webhookUrl, body);
 	} else {
-		return validateRequest(authToken, request.headers['x-twilio-signature'], webhookUrl, request.rawBody || {});
+		return validateRequest(authToken, request.headers['x-twilio-signature'], webhookUrl, body);
 	}
 }
 
@@ -101,7 +100,7 @@ export function twimlMiddlewareFactory() {
 			console.log('Valid Twilio Request');
 			next();
 		} else {
-			console.log('Validation failed', req.headers['x-twilio-signature']);
+			console.log('Validation failed', req.headers['x-twilio-signature'], Buffer.from(req.rawBody, 'utf-8'));
 			return res
 				.type('text/plain')
 				.status(403)
