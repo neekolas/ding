@@ -202,7 +202,7 @@ export default function() {
 
 	app.post('/buzz/:buzzId/dial', buzzMiddleware, async function(req: BuzzRequest, res) {
 		const { twiml, logger, buzz, hostname, body } = req;
-		const { From } = body;
+		const { To } = body;
 		const { phoneNumber } = buzz.match.person;
 		try {
 			if (!phoneNumber) {
@@ -211,7 +211,7 @@ export default function() {
 			logger.log('Connecting to ', buzz.match.person.phoneNumber);
 			twiml.say('Connecting');
 			twiml.enqueue({ waitUrl: HOLD_MUSIC }, buzz.id.toString());
-			await twilioClient.dial(`https://${hostname}/voice/buzz/${buzz.id}/join`, From, phoneNumber);
+			await twilioClient.dial(`https://${hostname}/voice/buzz/${buzz.id}/join`, To, phoneNumber);
 			res.end(twiml.toString());
 		} catch (e) {
 			logger.error(e);
