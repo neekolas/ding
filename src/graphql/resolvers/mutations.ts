@@ -85,7 +85,7 @@ export default {
 				suite.buzzer.address
 			}🎊\n\nYou can use code ${code} to enter at any time.\n\nFinish setting up your account at ${WEB_URL}/sign-in?phonNumber=${phoneNumber}`
 		);
-		await db.PersonSuites.insert({ person, suite, role: PersonSuiteRole.OWNER, hashedActivationCode: hash });
+		await db.PersonSuites.insert({ person, suite, role: PersonSuiteRole.OWNER, hashedUnlockCode: hash });
 		const newSuite = await db.Suites.findOneOrFail(suite.id, { relations: ['buzzer', 'line'] });
 		return mergeSuiteAndBuzzer(newSuite, newSuite.buzzer);
 	},
