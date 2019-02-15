@@ -57,27 +57,16 @@ function validateRequestWithBody(authToken, twilioHeader, requestUrl, body) {
       - host: manually specify the host name used by Twilio in a number's webhook config
       - protocol: manually specify the protocol used by Twilio in a number's webhook config
    */
-function validateExpressRequest(request, authToken, opts) {
-	var options = opts || {};
-	var webhookUrl;
+function validateExpressRequest(request, authToken, { path }) {
+	var protocol = request.protocol;
+	var host = request.headers.host;
 
-	if (options.url) {
-		// Let the user specify the full URL
-		webhookUrl = options.url;
-	} else {
-		// Use configured host/protocol, or infer based on request
-		var protocol = request.protocol;
-		var host = request.headers.host;
+	let webhookUrl = url.format({
+		protocol: protocol,
+		host: host,
+		pathname: path
+	});
 
-		webhookUrl = url.format({
-			protocol: protocol,
-			host: host,
-			pathname: request.originalUrl
-		});
-		if (request.originalUrl.search(/\?/) >= 0) {
-			webhookUrl = webhookUrl.replace('%3F', '?');
-		}
-	}
 	let body = request.rawBody;
 	if (body && typeof body !== 'string' && body.toString) {
 		body = body.toString();
@@ -90,17 +79,17 @@ function validateExpressRequest(request, authToken, opts) {
 	}
 }
 
-export function twimlMiddlewareFactory() {
+export function twimlMiddlewareFactory(path: string) {
 	const { TWILIO_AUTH_TOKEN } = process.env;
 
 	return function(req, res, next) {
-		var valid = validateExpressRequest(req, TWILIO_AUTH_TOKEN, {});
+		var valid = validateExpressRequest(req, TWILIO_AUTH_TOKEN, { path });
 
 		if (valid) {
 			console.log('Valid Twilio Request');
 			next();
 		} else {
-			console.log('Validation failed', req.headers['x-twilio-signature'], Buffer.from(req.rawBody, 'utf-8'));
+			console.log('Validation failed', req.headers['x-twilio-signature']);
 			return res
 				.type('text/plain')
 				.status(403)

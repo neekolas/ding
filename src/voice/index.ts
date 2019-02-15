@@ -88,10 +88,9 @@ export default function() {
 	const app = express();
 	app.use(dbMiddleware);
 	// TWIML middleware
-	app.use(twimlMiddlewareFactory());
 
 	// Root Handler
-	app.post('/', async function(req: VoiceRequest, res) {
+	app.post('/', twimlMiddlewareFactory('/voice/'), async function(req: VoiceRequest, res) {
 		const { db, twiml, body } = req;
 		try {
 			const buzzer = await lookupBuzzer(db, body.From);

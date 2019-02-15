@@ -11,7 +11,7 @@ export type StatusRequest = Request & {
 
 export default function() {
 	const app = express();
-	app.use(twimlMiddlewareFactory(), dbMiddleware);
+	app.use(twimlMiddlewareFactory('/status/'), dbMiddleware);
 	app.post('/', async function(req: StatusRequest, res) {
 		const { body } = req;
 		console.log(JSON.stringify(body));
