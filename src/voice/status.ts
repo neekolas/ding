@@ -1,8 +1,7 @@
 import express, { Request } from 'express';
 import bodyParser from 'body-parser';
-import { webhook } from 'twilio';
 import { dbMiddleware, DB } from '../db';
-
+import { twimlMiddlewareFactory } from './middleware';
 export type StatusRequest = Request & {
 	db: DB;
 	body: {
@@ -12,7 +11,7 @@ export type StatusRequest = Request & {
 
 export default function() {
 	const app = express();
-	app.use(webhook(), dbMiddleware);
+	app.use(twimlMiddlewareFactory(), dbMiddleware);
 	app.post('/', async function(req: StatusRequest, res) {
 		const { body } = req;
 		console.log(JSON.stringify(body));
