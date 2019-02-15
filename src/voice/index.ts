@@ -11,7 +11,7 @@ import {
 	findBuzzOwners
 } from '../db';
 import { ACTIVATE_SUITE, ACTIVATE_SUITE_CALLBACK } from './routes';
-import { PersonSuiteRole, PersonSuite, Buzz, Person } from '../models';
+import { PersonSuiteRole, PersonSuite, Buzz, Person, MatchType } from '../models';
 import { escapeRegExp } from 'lodash';
 import twilioClient from '../twilio';
 import { buzzLogger, BuzzLogger } from './logger';
@@ -68,8 +68,9 @@ function testRegex(text: string | undefined, cmp: string): boolean {
 	return RegExp(escapeRegExp(text), 'ig').test(cmp);
 }
 
-async function addMatch(db: DB, buzz: Buzz, ps: PersonSuite): Promise<Buzz> {
+async function addMatch(db: DB, buzz: Buzz, ps: PersonSuite, matchType = MatchType.SPEECH): Promise<Buzz> {
 	buzz.match = ps;
+	buzz.matchType = matchType;
 	await db.Buzzes.save(buzz);
 	return buzz;
 }
@@ -177,7 +178,7 @@ export default function() {
 		logger.log('Unstable speech result', UnstableSpeechResult);
 		if (buzz.match) {
 			logger.log('Already has a match');
-			res.end();
+			return res.end();
 		}
 		try {
 			const personSuites = await findBuzzOwners(db, buzz);
