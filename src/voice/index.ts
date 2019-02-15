@@ -16,7 +16,6 @@ import { escapeRegExp } from 'lodash';
 import twilioClient from '../twilio';
 import { buzzLogger, BuzzLogger } from './logger';
 import { INTRO_MP3, HOLD_MUSIC } from './sounds';
-import twilio = require('twilio');
 
 export type VoiceRequest = Request & {
 	twiml: VoiceResponse;
@@ -24,77 +23,11 @@ export type VoiceRequest = Request & {
 	db: DB;
 };
 
+// Only applied on routes with :buzzId param
 export type BuzzRequest = VoiceRequest & {
 	buzz: Buzz;
 	logger: BuzzLogger;
 };
-
-function twimlMiddleware(req: VoiceRequest, res, next) {
-	req.twiml = new VoiceResponse();
-	res.setHeader('Content-Type', 'text/xml');
-	console.log(req.url, '\n', JSON.stringify(req.body));
-	next();
-}
-
-function buildHints(owners: PersonSuite[]): string {
-	return owners
-		.map(owner => {
-			return [owner.person.firstName, owner.person.lastName].filter(p => p).join(' ');
-		})
-		.join(' ');
-}
-
-async function buzzMiddleware(req: BuzzRequest, res, next) {
-	const { params, db } = req;
-	const { buzzId } = params;
-	try {
-		req.buzz = await db.Buzzes.findOneOrFail(buzzId, { relations: ['suite', 'match', 'match.person'] });
-		req.logger = buzzLogger(req.buzz);
-		next();
-	} catch (e) {
-		console.error(e);
-		return res.sendStatus(401);
-	}
-}
-
-function joinFirstAndLastName(person: Person) {
-	return [person.firstName, person.lastName, person.nickname].filter(p => p).join(' ');
-}
-
-function testRegex(text: string | undefined, cmp: string): boolean {
-	if (!text) {
-		return false;
-	}
-	return RegExp(escapeRegExp(text), 'ig').test(cmp);
-}
-
-async function addMatch(db: DB, buzz: Buzz, ps: PersonSuite, matchType = MatchType.SPEECH): Promise<Buzz> {
-	buzz.match = ps;
-	buzz.matchType = matchType;
-	await db.Buzzes.save(buzz);
-	return buzz;
-}
-
-function findOwnerByName(text: string, owners: Person[]): Person | null {
-	owners = owners.filter(owner => owner.firstName || owner.lastName || owner.nickname);
-	const fullHit = owners.find(p => testRegex(joinFirstAndLastName(p), text));
-	if (fullHit) {
-		return fullHit;
-	}
-	const firstNameHit = owners.filter(p => testRegex(p.firstName, text));
-	if (firstNameHit.length === 1) {
-		return firstNameHit[0];
-	}
-	const lastNameHit = owners.filter(p => testRegex(p.lastName, text));
-	if (lastNameHit.length === 1) {
-		return lastNameHit[0];
-	}
-	const nicknameHit = owners.filter(p => testRegex(p.nickname, text));
-	if (nicknameHit.length === 1) {
-		return nicknameHit[0];
-	}
-	return null;
-}
 
 export default function() {
 	const app = express();
@@ -227,6 +160,7 @@ export default function() {
 		const { twiml, logger, buzz, hostname, body } = req;
 		twiml.say('Connecting');
 		logger.log('Connecting', buzz.id);
+		// Twilio docs let you open a dial without arguments, but Typescript doesn't agree
 		//@ts-ignore
 		const dial = twiml.dial();
 		dial.queue(buzz.id.toString());
@@ -250,7 +184,6 @@ export default function() {
 			return res.sendStatus(500);
 		}
 
-		// twiml.hangup();
 		res.end(twiml.toString());
 	});
 
@@ -281,4 +214,71 @@ export default function() {
 	});
 
 	return app;
+}
+
+function twimlMiddleware(req: VoiceRequest, res, next) {
+	req.twiml = new VoiceResponse();
+	res.setHeader('Content-Type', 'text/xml');
+	console.log(req.url, '\n', JSON.stringify(req.body));
+	next();
+}
+
+function buildHints(owners: PersonSuite[]): string {
+	return owners
+		.map(owner => {
+			return [owner.person.firstName, owner.person.lastName].filter(p => p).join(' ');
+		})
+		.join(' ');
+}
+
+async function buzzMiddleware(req: BuzzRequest, res, next) {
+	const { params, db } = req;
+	const { buzzId } = params;
+	try {
+		req.buzz = await db.Buzzes.findOneOrFail(buzzId, { relations: ['suite', 'match', 'match.person'] });
+		req.logger = buzzLogger(req.buzz);
+		next();
+	} catch (e) {
+		console.error(e);
+		return res.sendStatus(401);
+	}
+}
+
+function joinFirstAndLastName(person: Person) {
+	return [person.firstName, person.lastName, person.nickname].filter(p => p).join(' ');
+}
+
+function testRegex(text: string | undefined, cmp: string): boolean {
+	if (!text) {
+		return false;
+	}
+	return RegExp(escapeRegExp(text), 'ig').test(cmp);
+}
+
+async function addMatch(db: DB, buzz: Buzz, ps: PersonSuite, matchType = MatchType.SPEECH): Promise<Buzz> {
+	buzz.match = ps;
+	buzz.matchType = matchType;
+	await db.Buzzes.save(buzz);
+	return buzz;
+}
+
+function findOwnerByName(text: string, owners: Person[]): Person | null {
+	owners = owners.filter(owner => owner.firstName || owner.lastName || owner.nickname);
+	const fullHit = owners.find(p => testRegex(joinFirstAndLastName(p), text));
+	if (fullHit) {
+		return fullHit;
+	}
+	const firstNameHit = owners.filter(p => testRegex(p.firstName, text));
+	if (firstNameHit.length === 1) {
+		return firstNameHit[0];
+	}
+	const lastNameHit = owners.filter(p => testRegex(p.lastName, text));
+	if (lastNameHit.length === 1) {
+		return lastNameHit[0];
+	}
+	const nicknameHit = owners.filter(p => testRegex(p.nickname, text));
+	if (nicknameHit.length === 1) {
+		return nicknameHit[0];
+	}
+	return null;
 }
