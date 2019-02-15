@@ -68,7 +68,7 @@ function validateExpressRequest(request, authToken, { path }) {
 	});
 
 	let body = request.rawBody;
-
+	console.log(webhookUrl);
 	if (webhookUrl.indexOf('bodySHA256') > 0) {
 		return validateRequestWithBody(authToken, request.headers['x-twilio-signature'], webhookUrl, body);
 	} else {
