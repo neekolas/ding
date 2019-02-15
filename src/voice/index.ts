@@ -209,7 +209,11 @@ export default function() {
 				throw new Error('No phone number on person');
 			}
 			logger.log('Connecting to ', buzz.match.person.phoneNumber);
-			twiml.say('Connecting');
+			const { firstName } = buzz.match.person;
+			if (firstName) {
+				twiml.say(`Connecting to ${buzz.match.person.firstName}`);
+			}
+
 			twiml.enqueue({ waitUrl: HOLD_MUSIC }, buzz.id.toString());
 			await twilioClient.dial(`https://${hostname}/voice/buzz/${buzz.id}/join`, To, phoneNumber);
 			res.end(twiml.toString());
