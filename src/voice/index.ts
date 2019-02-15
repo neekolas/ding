@@ -1,4 +1,5 @@
 import express, { Request } from 'express';
+import bodyParser from 'body-parser';
 import VoiceResponse = require('twilio/lib/twiml/VoiceResponse');
 import {
 	DB,
@@ -13,7 +14,6 @@ import { ACTIVATE_SUITE, ACTIVATE_SUITE_CALLBACK } from './routes';
 import { PersonSuiteRole, PersonSuite, Buzz, Person } from '../models';
 import { escapeRegExp } from 'lodash';
 import twilioClient from '../twilio';
-import { twimlMiddlewareFactory } from './middleware';
 
 export type VoiceRequest = Request & {
 	twiml: VoiceResponse;
@@ -86,11 +86,12 @@ function findOwnerByName(text: string, owners: Person[]): Person | null {
 
 export default function() {
 	const app = express();
-	app.use(dbMiddleware, twimlMiddleware);
+	app.use(dbMiddleware);
 	// TWIML middleware
+	app.use(bodyParser.urlencoded({ extended: true }), twimlMiddleware);
 
 	// Root Handler
-	app.post('/', twimlMiddlewareFactory('/voice/'), async function(req: VoiceRequest, res) {
+	app.post('/', async function(req: VoiceRequest, res) {
 		const { db, twiml, body } = req;
 		try {
 			const buzzer = await lookupBuzzer(db, body.From);
