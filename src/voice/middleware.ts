@@ -101,6 +101,7 @@ export function twimlMiddlewareFactory() {
 			console.log('Valid Twilio Request');
 			next();
 		} else {
+			console.log('Validation failed', req);
 			return res
 				.type('text/plain')
 				.status(403)
