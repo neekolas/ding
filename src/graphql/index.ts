@@ -10,6 +10,7 @@ export default function(path = '/') {
 	const app = express();
 	app.use(dbMiddleware);
 	app.use(userMiddleware);
+	console.log('Starting up instance');
 
 	const server = new ApolloServer({
 		// These will be defined for both new or existing servers
