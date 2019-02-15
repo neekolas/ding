@@ -86,7 +86,7 @@ export function twimlMiddlewareFactory(path: string) {
 			console.log('Valid Twilio Request');
 			next();
 		} else {
-			console.log('Validation failed', req.headers['x-twilio-signature']);
+			console.log('Validation failed', req.headers['x-twilio-signature'], TWILIO_AUTH_TOKEN);
 			return res
 				.type('text/plain')
 				.status(403)
