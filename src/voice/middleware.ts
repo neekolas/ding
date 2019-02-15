@@ -58,7 +58,7 @@ function validateRequestWithBody(authToken, twilioHeader, requestUrl, body) {
       - protocol: manually specify the protocol used by Twilio in a number's webhook config
    */
 function validateExpressRequest(request, authToken, { path }) {
-	var protocol = request.protocol;
+	var protocol = 'https';
 	var host = request.headers.host;
 
 	let webhookUrl = url.format({
