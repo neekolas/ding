@@ -16,7 +16,7 @@ export async function initDB(overrides = {}): Promise<DB> {
 	const connectionOptions = await getConnectionOptions();
 	const dbStartTime = +new Date();
 	var conn = await createConnection(connectionOptions);
-	console.log(`Database initialized in ${dbStartTime - +new Date()}ms`);
+	console.log(`Database initialized in ${+new Date() - dbStartTime}ms`);
 	return {
 		connection: conn,
 		People: conn.getRepository(Person),
