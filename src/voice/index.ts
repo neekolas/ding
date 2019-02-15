@@ -15,6 +15,7 @@ import { PersonSuiteRole, PersonSuite, Buzz, Person } from '../models';
 import { escapeRegExp } from 'lodash';
 import twilioClient from '../twilio';
 import { buzzLogger, BuzzLogger } from './logger';
+import { INTRO_MP3 } from './sounds';
 
 export type VoiceRequest = Request & {
 	twiml: VoiceResponse;
@@ -132,7 +133,7 @@ export default function() {
 				partialResultCallback: `/voice/buzz/${buzz.id}/speach`
 			});
 
-			gather.say('Say the name of the person you are trying to see or enter an unlock code');
+			gather.play({}, INTRO_MP3);
 			res.end(twiml.toString());
 		} catch (e) {
 			console.error(e);
