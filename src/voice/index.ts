@@ -86,7 +86,7 @@ function findOwnerByName(text: string, owners: Person[]): Person | null {
 
 export default function() {
 	const app = express();
-	app.use(dbMiddleware);
+	app.use(dbMiddleware, twimlMiddleware);
 	// TWIML middleware
 
 	// Root Handler
