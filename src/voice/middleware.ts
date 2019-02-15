@@ -79,10 +79,10 @@ function validateExpressRequest(request, authToken, opts) {
 		}
 	}
 	let body = request.rawBody;
-	if (typeof body !== 'string') {
+	if (body && typeof body !== 'string' && body.toString) {
 		body = body.toString();
 	}
-	console.log(webhookUrl);
+	console.log(webhookUrl, body);
 	if (webhookUrl.indexOf('bodySHA256') > 0) {
 		return validateRequestWithBody(authToken, request.headers['x-twilio-signature'], webhookUrl, body);
 	} else {
