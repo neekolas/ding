@@ -15,7 +15,8 @@ import { PersonSuiteRole, PersonSuite, Buzz, Person } from '../models';
 import { escapeRegExp } from 'lodash';
 import twilioClient from '../twilio';
 import { buzzLogger, BuzzLogger } from './logger';
-import { INTRO_MP3 } from './sounds';
+import { INTRO_MP3, HOLD_MUSIC } from './sounds';
+import twilio = require('twilio');
 
 export type VoiceRequest = Request & {
 	twiml: VoiceResponse;
@@ -47,7 +48,7 @@ async function buzzMiddleware(req: BuzzRequest, res, next) {
 	const { params, db } = req;
 	const { buzzId } = params;
 	try {
-		req.buzz = await db.Buzzes.findOneOrFail(buzzId, { relations: ['suite', 'match'] });
+		req.buzz = await db.Buzzes.findOneOrFail(buzzId, { relations: ['suite', 'match', 'match.person'] });
 		req.logger = buzzLogger(req.buzz);
 		next();
 	} catch (e) {
@@ -160,7 +161,7 @@ export default function() {
 					const ps = personSuites.find(ps => ps.personId === match.id);
 					if (ps) {
 						await addMatch(db, buzz, ps);
-						twiml.redirect(`/voice/dial/${match.phoneNumber}`);
+						twiml.redirect(`/voice/buzz/${buzz.id}/dial`);
 					}
 				}
 			} catch (e) {
@@ -190,7 +191,7 @@ export default function() {
 					logger.error('Could not find ps');
 				}
 				logger.log(`Match for ${UnstableSpeechResult}: ${match}`);
-				await twilioClient.redirectCall(buzz.nodeID, `https://${hostname}/voice/dial/${match.phoneNumber}`);
+				await twilioClient.redirectCall(buzz.nodeID, `https://${hostname}/voice/buzz/${buzz.id}/dial`);
 			}
 		} catch (e) {
 			logger.error(e);
@@ -198,10 +199,30 @@ export default function() {
 		res.end();
 	});
 
-	app.post('/dial/:phoneNumber', function(req: VoiceRequest, res) {
-		const { params, twiml } = req;
+	app.post('/buzz/:buzzId/dial', buzzMiddleware, async function(req: BuzzRequest, res) {
+		const { twiml, logger, buzz, hostname, body } = req;
+		const { From } = body;
+		const { phoneNumber } = buzz.match.person;
+		try {
+			if (!phoneNumber) {
+				throw new Error('No phone number on person');
+			}
+			logger.log('Connecting to ', buzz.match.person.phoneNumber);
+			twiml.say('Connecting');
+			twiml.enqueue({ waitUrl: HOLD_MUSIC }, buzz.id.toString());
+			await twilioClient.dial(`https://${hostname}/voice/buzz/${buzz.id}/join`, From, phoneNumber);
+			res.end(twiml.toString());
+		} catch (e) {
+			logger.error(e);
+			res.sendStatus(500);
+		}
+	});
+
+	app.post('/buzz/:buzzId/join', buzzMiddleware, async function(req: BuzzRequest, res) {
+		const { twiml, logger, buzz, hostname, body } = req;
 		twiml.say('Connecting');
-		twiml.dial(params.phoneNumber);
+		logger.log('Connecting', buzz.id);
+		twiml.queue(buzz.id.toString());
 		res.end(twiml.toString());
 	});
 

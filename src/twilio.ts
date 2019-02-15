@@ -10,6 +10,13 @@ class TwilioClient {
 		}
 		this.client = twilio(TWILIO_SID, TWILIO_AUTH_TOKEN);
 	}
+	async dial(url: string, from: string, to: string) {
+		return this.client.calls.create({
+			url,
+			from,
+			to
+		});
+	}
 	async redirectCall(callID: string, url: string) {
 		return this.client.calls(callID).update({ method: 'POST', url });
 	}
