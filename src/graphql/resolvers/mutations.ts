@@ -70,7 +70,7 @@ export default {
 		return formatPerson(user);
 	},
 	async inviteOwner(parent, { suiteID, phoneNumber }: InviteOwnerArgs, { user, db }: ResolverContext, info) {
-		const suite = await db.Suites.findOneOrFail({ where: { nodeID: suiteID } });
+		const suite = await db.Suites.findOneOrFail({ where: { nodeID: suiteID }, relations: ['buzzer'] });
 		const ps = await db.PersonSuites.findOne({
 			where: { person: user, role: PersonSuiteRole.OWNER, suite }
 		});
