@@ -185,6 +185,8 @@ export default function() {
 				const ps = personSuites.find(ps => ps.personId === match.id);
 				if (ps) {
 					await addMatch(db, buzz, ps);
+				} else {
+					logger.error('Could not find ps');
 				}
 				logger.log(`Match for ${UnstableSpeechResult}: ${match}`);
 				await twilioClient.redirectCall(buzz.nodeID, `https://${hostname}/voice/dial/${match.phoneNumber}`);

@@ -90,12 +90,12 @@ export async function upsertPerson(db: DB, phoneNumber: string): Promise<Person>
 	return person;
 }
 
-export async function findBuzzOwners(db: DB, buzz: Buzz): Promise<Person[]> {
+export async function findBuzzOwners(db: DB, buzz: Buzz): Promise<PersonSuite[]> {
 	const ps = await db.PersonSuites.find({
 		where: { suite: buzz.suite, role: PersonSuiteRole.OWNER },
 		relations: ['person']
 	});
-	return ps.map(p => p.person);
+	return ps;
 }
 
 export function createBuzz(db: DB, nodeID: string, suite: Suite): Promise<Buzz> {
