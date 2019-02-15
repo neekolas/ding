@@ -223,7 +223,10 @@ export default function() {
 		const { twiml, logger, buzz, hostname, body } = req;
 		twiml.say('Connecting');
 		logger.log('Connecting', buzz.id);
-		twiml.queue(buzz.id.toString());
+		//@ts-ignore
+		const dial = twiml.dial();
+		dial.queue(buzz.id.toString());
+		console.log(twiml.toString());
 		res.end(twiml.toString());
 	});
 
