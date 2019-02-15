@@ -170,6 +170,9 @@ export class PersonSuite {
 	@Column()
 	personId?: number;
 
+	@Column({ nullable: true })
+	hashedActivationCode?: string;
+
 	@ManyToOne(type => Person, person => person.suites, { onDelete: 'CASCADE' })
 	person: Person;
 

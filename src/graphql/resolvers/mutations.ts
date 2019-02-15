@@ -1,10 +1,13 @@
-import { generateActivationCode } from '../../utils';
+import { generateActivationCode, generateHashedActivationCode } from '../../utils';
 import { ForbiddenError } from 'apollo-server-core';
 import { ResolverContext } from './ctx';
 import { findAvailableLine, upsertPerson } from '../../db';
 import { findCountry, lookupPlace } from '../../maps';
 import { PersonSuiteRole } from '../../models';
 import { mergeSuiteAndBuzzer, formatPerson } from './helpers';
+import twilioClient from '../../twilio';
+
+const WEB_URL = 'https://dingdong-dev.firebaseapp.com';
 
 export interface CreateSuiteArgs {
 	unit: string;
@@ -75,7 +78,14 @@ export default {
 			throw new ForbiddenError('Does not own suite');
 		}
 		const person = await upsertPerson(db, phoneNumber);
-		await db.PersonSuites.insert({ person, suite, role: PersonSuiteRole.OWNER });
+		const { hash, code } = generateHashedActivationCode();
+		await twilioClient.sms(
+			phoneNumber,
+			`You have been added to a DingDong buzzer at ${
+				suite.buzzer.address
+			}🎊\n\nYou can use code ${code} to enter at any time.\n\nFinish setting up your account at ${WEB_URL}/sign-in?phonNumber=${phoneNumber}`
+		);
+		await db.PersonSuites.insert({ person, suite, role: PersonSuiteRole.OWNER, hashedActivationCode: hash });
 		const newSuite = await db.Suites.findOneOrFail(suite.id, { relations: ['buzzer', 'line'] });
 		return mergeSuiteAndBuzzer(newSuite, newSuite.buzzer);
 	},

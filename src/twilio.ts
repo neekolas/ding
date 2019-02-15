@@ -1,5 +1,5 @@
 import twilio, { Twilio } from 'twilio';
-const { TWILIO_SID, TWILIO_AUTH_TOKEN } = process.env;
+const { TWILIO_SID, TWILIO_AUTH_TOKEN, TWILIO_DEFAULT_NUMBER = '+17602923464' } = process.env;
 
 class TwilioClient {
 	client: Twilio;
@@ -10,18 +10,18 @@ class TwilioClient {
 		}
 		this.client = twilio(TWILIO_SID, TWILIO_AUTH_TOKEN);
 	}
-	async dial(url: string, from: string, to: string) {
+	async dial(url: string, to: string) {
 		return this.client.calls.create({
 			url,
-			from,
+			from: TWILIO_DEFAULT_NUMBER,
 			to
 		});
 	}
 	async redirectCall(callID: string, url: string) {
 		return this.client.calls(callID).update({ method: 'POST', url });
 	}
-	async sms(from: string, to: string, body: string) {
-		const result = await this.client.messages.create({ from, to, body });
+	async sms(to: string, body: string) {
+		const result = await this.client.messages.create({ from: TWILIO_DEFAULT_NUMBER, to, body });
 		console.log(result);
 		return result;
 	}

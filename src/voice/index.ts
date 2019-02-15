@@ -148,7 +148,7 @@ export default function() {
 			}
 
 			twiml.enqueue({ waitUrl: HOLD_MUSIC }, buzz.id.toString());
-			await twilioClient.dial(`https://${hostname}/voice/buzz/${buzz.id}/join`, To, phoneNumber);
+			await twilioClient.dial(`https://${hostname}/voice/buzz/${buzz.id}/join`, phoneNumber);
 			res.end(twiml.toString());
 		} catch (e) {
 			logger.error(e);
