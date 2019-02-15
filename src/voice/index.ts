@@ -1,5 +1,4 @@
 import express, { Request } from 'express';
-import bodyParser from 'body-parser';
 import VoiceResponse = require('twilio/lib/twiml/VoiceResponse');
 import {
 	DB,
