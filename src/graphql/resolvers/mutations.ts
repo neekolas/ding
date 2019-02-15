@@ -81,9 +81,9 @@ export default {
 		const { hash, code } = generateHashedActivationCode();
 		await twilioClient.sms(
 			phoneNumber,
-			`You have been added to a DingDong buzzer at ${
+			`🎊You have been added to a DingDong buzzer at ${
 				suite.buzzer.address
-			}🎊\n\nYou can buzz your suite and enter code ${code} to enter at any time.\n\nFinish setting up your account at ${WEB_URL}/sign-in?phonNumber=${phoneNumber}`
+			} 🎊\n\nYou can buzz your suite and enter code ${code} to enter at any time.\n\nFinish setting up your account at ${WEB_URL}/sign-in?phonNumber=${phoneNumber}`
 		);
 		await db.PersonSuites.insert({ person, suite, role: PersonSuiteRole.OWNER, hashedUnlockCode: hash });
 		const newSuite = await db.Suites.findOneOrFail(suite.id, { relations: ['buzzer', 'line'] });

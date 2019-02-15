@@ -1,6 +1,23 @@
 import { createHash, createHmac } from 'crypto';
 import scmp from 'scmp';
 import * as url from 'url';
+import { Request } from 'express';
+import VoiceResponse = require('twilio/lib/twiml/VoiceResponse');
+import { DB } from '../db';
+import { Buzz } from '../models';
+import { BuzzLogger } from './logger';
+
+export type VoiceRequest = Request & {
+	twiml: VoiceResponse;
+	body: any;
+	db: DB;
+};
+
+// Only applied on routes with :buzzId param
+export type BuzzRequest = VoiceRequest & {
+	buzz: Buzz;
+	logger: BuzzLogger;
+};
 
 function validateBody(body, expectedValue) {
 	var hash = createHash('sha256')
@@ -94,4 +111,24 @@ export function twimlMiddlewareFactory(path: string) {
 		// 		.send('Twilio Request Validation Failed.');
 		// }
 	};
+}
+
+export function twimlMiddleware(req: VoiceRequest, res, next) {
+	req.twiml = new VoiceResponse();
+	res.setHeader('Content-Type', 'text/xml');
+	console.log(req.url, '\n', JSON.stringify(req.body));
+	next();
+}
+
+export async function buzzMiddleware(req: BuzzRequest, res, next) {
+	const { params, db } = req;
+	const { buzzId } = params;
+	try {
+		req.buzz = await db.Buzzes.findOneOrFail(buzzId, { relations: ['suite', 'match', 'match.person'] });
+		req.logger = buzzLogger(req.buzz);
+		next();
+	} catch (e) {
+		console.error(e);
+		return res.sendStatus(401);
+	}
 }

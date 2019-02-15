@@ -1,6 +1,5 @@
 import express, { Request } from 'express';
 import bodyParser from 'body-parser';
-import VoiceResponse = require('twilio/lib/twiml/VoiceResponse');
 import {
 	DB,
 	dbMiddleware,
@@ -14,20 +13,9 @@ import { ACTIVATE_SUITE, ACTIVATE_SUITE_CALLBACK } from './routes';
 import { PersonSuiteRole, PersonSuite, Buzz, Person, MatchType } from '../models';
 import { escapeRegExp } from 'lodash';
 import twilioClient from '../twilio';
-import { buzzLogger, BuzzLogger } from './logger';
+import { buzzLogger } from './logger';
 import { INTRO_MP3, HOLD_MUSIC } from './sounds';
-
-export type VoiceRequest = Request & {
-	twiml: VoiceResponse;
-	body: any;
-	db: DB;
-};
-
-// Only applied on routes with :buzzId param
-export type BuzzRequest = VoiceRequest & {
-	buzz: Buzz;
-	logger: BuzzLogger;
-};
+import { VoiceRequest, twimlMiddleware, buzzMiddleware, BuzzRequest } from './middleware';
 
 export default function() {
 	const app = express();
@@ -59,7 +47,7 @@ export default function() {
 			const logger = buzzLogger(buzz);
 			logger.log('Created buzz', buzz);
 			const gather = twiml.gather({
-				numDigits: 4,
+				numDigits: 5,
 				action: `/voice/buzz/${buzz.id}/unlock`,
 				hints: buildHints(owners),
 				input: 'dtmf speech',
@@ -164,7 +152,7 @@ export default function() {
 		//@ts-ignore
 		const dial = twiml.dial();
 		dial.queue(buzz.id.toString());
-		console.log(twiml.toString());
+		logger.log(twiml.toString());
 		res.end(twiml.toString());
 	});
 
@@ -216,32 +204,12 @@ export default function() {
 	return app;
 }
 
-function twimlMiddleware(req: VoiceRequest, res, next) {
-	req.twiml = new VoiceResponse();
-	res.setHeader('Content-Type', 'text/xml');
-	console.log(req.url, '\n', JSON.stringify(req.body));
-	next();
-}
-
 function buildHints(owners: PersonSuite[]): string {
 	return owners
 		.map(owner => {
 			return [owner.person.firstName, owner.person.lastName].filter(p => p).join(' ');
 		})
 		.join(' ');
-}
-
-async function buzzMiddleware(req: BuzzRequest, res, next) {
-	const { params, db } = req;
-	const { buzzId } = params;
-	try {
-		req.buzz = await db.Buzzes.findOneOrFail(buzzId, { relations: ['suite', 'match', 'match.person'] });
-		req.logger = buzzLogger(req.buzz);
-		next();
-	} catch (e) {
-		console.error(e);
-		return res.sendStatus(401);
-	}
 }
 
 function joinFirstAndLastName(person: Person) {
