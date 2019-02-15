@@ -66,8 +66,8 @@ function validateExpressRequest(request, authToken, opts) {
 		webhookUrl = options.url;
 	} else {
 		// Use configured host/protocol, or infer based on request
-		var protocol = options.protocol || request.protocol;
-		var host = options.host || request.headers.host;
+		var protocol = request.protocol;
+		var host = request.headers.host;
 
 		webhookUrl = url.format({
 			protocol: protocol,
@@ -82,12 +82,12 @@ function validateExpressRequest(request, authToken, opts) {
 	if (webhookUrl.indexOf('bodySHA256') > 0) {
 		return validateRequestWithBody(
 			authToken,
-			request.header('X-Twilio-Signature'),
+			request.headers['x-twilio-signature'],
 			webhookUrl,
 			request.rawBody || {}
 		);
 	} else {
-		return validateRequest(authToken, request.header('X-Twilio-Signature'), webhookUrl, request.rawBody || {});
+		return validateRequest(authToken, request.headers['x-twilio-signature'], webhookUrl, request.rawBody || {});
 	}
 }
 
@@ -101,7 +101,7 @@ export function twimlMiddlewareFactory() {
 			console.log('Valid Twilio Request');
 			next();
 		} else {
-			console.log('Validation failed', Object.keys(req));
+			console.log('Validation failed', req.headers['x-twilio-signature']);
 			return res
 				.type('text/plain')
 				.status(403)
