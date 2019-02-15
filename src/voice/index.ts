@@ -126,6 +126,7 @@ export default function() {
 			console.log(`Sending TWIML\n${twiml.toString()}`);
 			res.end(twiml.toString());
 		} catch (e) {
+			console.error(e);
 			res.status(500);
 			return res.end(`Error: ${e}`);
 		}
