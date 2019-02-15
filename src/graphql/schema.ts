@@ -44,8 +44,8 @@ export default gql`
 
 	type Mutation {
 		updateUser(firstName: String, lastName: String, nickname: String): Person!
-		unlinkPerson(suiteID: ID!, personID: ID!): Boolean!
-		inviteOwner(suiteID: ID!, phoneNumber: String!): Boolean!
+		unlinkPerson(suiteID: ID!, personID: ID!): Suite!
+		inviteOwner(suiteID: ID!, phoneNumber: String!): Suite!
 		createSuite(placeID: String!, unit: String!): Suite!
 		createLine(phoneNumber: String!, country: String!): Boolean!
 		deleteSuite(suiteID: ID!): Boolean!
