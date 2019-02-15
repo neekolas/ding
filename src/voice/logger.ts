@@ -3,6 +3,18 @@ export interface BuzzLogger {
 	log(...args): void;
 	error(...args): void;
 }
+
+const stringify = something => {
+	switch (typeof something) {
+		case 'string':
+			return something;
+		case 'number':
+			return something.toString();
+		default:
+			return JSON.stringify(something);
+	}
+};
+
 export function buzzLogger(buzz: Buzz) {
 	const params = {
 		callSid: buzz.nodeID,
@@ -11,10 +23,10 @@ export function buzzLogger(buzz: Buzz) {
 	};
 	return {
 		log(...args) {
-			console.log(JSON.stringify({ ...params, message: args.map(arg => JSON.stringify(arg)).join(' ') }));
+			console.log(JSON.stringify({ ...params, message: args.map(stringify).join(' ') }));
 		},
 		error(...args) {
-			console.error(JSON.stringify({ ...params, message: args.map(arg => JSON.stringify(arg)).join(' ') }));
+			console.error(JSON.stringify({ ...params, message: args.map(stringify).join(' ') }));
 		}
 	};
 }
