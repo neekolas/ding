@@ -14,6 +14,7 @@ import { ACTIVATE_SUITE, ACTIVATE_SUITE_CALLBACK } from './routes';
 import { PersonSuiteRole, PersonSuite, Buzz, Person } from '../models';
 import { escapeRegExp } from 'lodash';
 import twilioClient from '../twilio';
+import { buzzLogger, BuzzLogger } from './logger';
 
 export type VoiceRequest = Request & {
 	twiml: VoiceResponse;
@@ -23,6 +24,7 @@ export type VoiceRequest = Request & {
 
 export type BuzzRequest = VoiceRequest & {
 	buzz: Buzz;
+	logger: BuzzLogger;
 };
 
 function twimlMiddleware(req: VoiceRequest, res, next) {
@@ -44,7 +46,8 @@ async function buzzMiddleware(req: BuzzRequest, res, next) {
 	const { params, db } = req;
 	const { buzzId } = params;
 	try {
-		req.buzz = await db.Buzzes.findOneOrFail(buzzId, { relations: ['suite'] });
+		req.buzz = await db.Buzzes.findOneOrFail(buzzId, { relations: ['suite', 'match'] });
+		req.logger = buzzLogger(req.buzz);
 		next();
 	} catch (e) {
 		console.error(e);
@@ -61,6 +64,12 @@ function testRegex(text: string | undefined, cmp: string): boolean {
 		return false;
 	}
 	return RegExp(escapeRegExp(text), 'ig').test(cmp);
+}
+
+async function addMatch(db: DB, buzz: Buzz, ps: PersonSuite): Promise<Buzz> {
+	buzz.match = ps;
+	await db.Buzzes.save(buzz);
+	return buzz;
 }
 
 function findOwnerByName(text: string, owners: Person[]): Person | null {
@@ -111,7 +120,8 @@ export default function() {
 				}),
 				createBuzz(db, body.CallSid, suite)
 			]);
-
+			const logger = buzzLogger(buzz);
+			logger.log('Created buzz', buzz);
 			const gather = twiml.gather({
 				numDigits: 4,
 				action: `/voice/buzz/${buzz.id}/unlock`,
@@ -123,7 +133,6 @@ export default function() {
 			});
 
 			gather.say('Say the name of the person you are trying to see or enter an unlock code');
-			console.log(`Sending TWIML\n${twiml.toString()}`);
 			res.end(twiml.toString());
 		} catch (e) {
 			console.error(e);
@@ -134,39 +143,54 @@ export default function() {
 
 	// Unlock Route
 	app.post('/buzz/:buzzId/unlock', buzzMiddleware, async function(req: BuzzRequest, res) {
-		const { twiml, body, buzz, db, hostname } = req;
+		const { twiml, body, buzz, db, logger } = req;
+
 		const { Digits, SpeechResult } = body;
+
 		if (Digits) {
 			twiml.say(`You entered code ${Digits.split().join(' ')}`);
 		} else if (SpeechResult) {
-			console.log('Speech Result', SpeechResult);
+			logger.log('Speech Result', SpeechResult);
 			try {
-				const owners = await findBuzzOwners(db, buzz);
+				const personSuites = await findBuzzOwners(db, buzz);
+				const owners = personSuites.map(ps => ps.person);
 				const match = findOwnerByName(SpeechResult, owners);
 				if (match) {
-					console.log(`Match for ${SpeechResult}: ${match}`);
-					twiml.redirect(`/voice/dial/${match.phoneNumber}`);
+					const ps = personSuites.find(ps => ps.personId === match.id);
+					if (ps) {
+						await addMatch(db, buzz, ps);
+						twiml.redirect(`/voice/dial/${match.phoneNumber}`);
+					}
 				}
 			} catch (e) {
-				console.error(e);
+				logger.error(e);
 			}
 		}
 		res.end(twiml.toString());
 	});
 
 	app.post('/buzz/:buzzId/speach', buzzMiddleware, async function(req: BuzzRequest, res) {
-		const { buzz, db, body, hostname } = req;
+		const { buzz, db, body, hostname, logger } = req;
 		const { UnstableSpeechResult } = body;
-		console.log('Unstable speech result', UnstableSpeechResult);
+		logger.log('Unstable speech result', UnstableSpeechResult);
+		if (buzz.match) {
+			logger.log('Already has a match');
+			res.end();
+		}
 		try {
-			const owners = await findBuzzOwners(db, buzz);
+			const personSuites = await findBuzzOwners(db, buzz);
+			const owners = personSuites.map(ps => ps.person);
 			const match = findOwnerByName(UnstableSpeechResult, owners);
 			if (match) {
-				console.log(`Match for ${UnstableSpeechResult}: ${match}`);
+				const ps = personSuites.find(ps => ps.personId === match.id);
+				if (ps) {
+					await addMatch(db, buzz, ps);
+				}
+				logger.log(`Match for ${UnstableSpeechResult}: ${match}`);
 				await twilioClient.redirectCall(buzz.nodeID, `https://${hostname}/voice/dial/${match.phoneNumber}`);
 			}
 		} catch (e) {
-			console.error(e);
+			logger.error(e);
 		}
 		res.end();
 	});
