@@ -80,17 +80,18 @@ export function twimlMiddlewareFactory(path: string) {
 	const { TWILIO_AUTH_TOKEN } = process.env;
 
 	return function(req, res, next) {
-		var valid = validateExpressRequest(req, TWILIO_AUTH_TOKEN, { path });
+		next();
+		// var valid = validateExpressRequest(req, TWILIO_AUTH_TOKEN, { path });
 
-		if (valid) {
-			console.log('Valid Twilio Request');
-			next();
-		} else {
-			console.log('Validation failed', req.headers['x-twilio-signature'], TWILIO_AUTH_TOKEN);
-			return res
-				.type('text/plain')
-				.status(403)
-				.send('Twilio Request Validation Failed.');
-		}
+		// if (valid) {
+		// 	console.log('Valid Twilio Request');
+		// 	next();
+		// } else {
+		// 	console.log('Validation failed', req.headers['x-twilio-signature'], TWILIO_AUTH_TOKEN);
+		// 	return res
+		// 		.type('text/plain')
+		// 		.status(403)
+		// 		.send('Twilio Request Validation Failed.');
+		// }
 	};
 }
