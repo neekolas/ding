@@ -6,6 +6,12 @@ export enum PersonSuiteRole {
 	VISITOR = 'visitor'
 }
 
+export enum MatchType {
+	CODE = 'code',
+	SPEECH = 'speech',
+	FALLBACK = 'fallback'
+}
+
 @Entity()
 export class Person {
 	@PrimaryGeneratedColumn()
@@ -127,31 +133,20 @@ export class Buzz {
 	@Column('timestamp', { nullable: true })
 	callEnd: Date;
 
-	@OneToMany(type => BuzzEvent, ev => ev.buzz)
-	events: BuzzEvent[];
+	@ManyToOne(type => PersonSuite, ps => ps.buzzes, { nullable: true })
+	match: PersonSuite;
+
+	@Column({
+		type: 'enum',
+		enum: MatchType,
+		nullable: true
+	})
+	matchType: MatchType;
 }
 
 export type EventPayload = {
 	[key: string]: any;
 };
-
-@Entity()
-export class BuzzEvent {
-	@PrimaryGeneratedColumn('uuid')
-	nodeID: string;
-
-	@Column('timestamp')
-	eventTime: Date;
-
-	@Column()
-	kind: string;
-
-	@Column('json')
-	payload: EventPayload;
-
-	@ManyToOne(type => Buzz, buzz => buzz.events)
-	buzz: Buzz;
-}
 
 @Entity()
 @Index(['personId', 'suiteId'], { unique: true })
@@ -177,4 +172,7 @@ export class PersonSuite {
 
 	@ManyToOne(type => Person, person => person.suites, { onDelete: 'CASCADE' })
 	person: Person;
+
+	@OneToMany(type => Buzz, buzz => buzz.match)
+	buzzes: Buzz[];
 }

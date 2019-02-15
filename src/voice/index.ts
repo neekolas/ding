@@ -1,5 +1,6 @@
 import express, { Request } from 'express';
 import bodyParser from 'body-parser';
+import { webhook } from 'twilio';
 import VoiceResponse = require('twilio/lib/twiml/VoiceResponse');
 import {
 	DB,
@@ -10,8 +11,9 @@ import {
 	createBuzz,
 	findBuzzOwners
 } from '../db';
-import { ACTIVATE_SUITE, ACTIVATE_SUITE_CALLBACK, LANDING, UNLOCK } from './routes';
+import { ACTIVATE_SUITE, ACTIVATE_SUITE_CALLBACK } from './routes';
 import { PersonSuiteRole, PersonSuite, Buzz, Person } from '../models';
+import { escapeRegExp } from 'lodash';
 import twilioClient from '../twilio';
 
 export type VoiceRequest = Request & {
@@ -55,21 +57,28 @@ function joinFirstAndLastName(person: Person) {
 	return [person.firstName, person.lastName, person.nickname].filter(p => p).join(' ');
 }
 
+function testRegex(text: string | undefined, cmp: string): boolean {
+	if (!text) {
+		return false;
+	}
+	return RegExp(escapeRegExp(text), 'ig').test(cmp);
+}
+
 function findOwnerByName(text: string, owners: Person[]): Person | null {
 	owners = owners.filter(owner => owner.firstName || owner.lastName || owner.nickname);
-	const fullHit = owners.find(p => RegExp(joinFirstAndLastName(p), 'ig').test(text));
+	const fullHit = owners.find(p => testRegex(joinFirstAndLastName(p), text));
 	if (fullHit) {
 		return fullHit;
 	}
-	const firstNameHit = owners.filter(p => RegExp(p.firstName || '', 'ig').test(text));
+	const firstNameHit = owners.filter(p => testRegex(p.firstName, text));
 	if (firstNameHit.length === 1) {
 		return firstNameHit[0];
 	}
-	const lastNameHit = owners.filter(p => RegExp(p.lastName || '', 'ig').test(text));
+	const lastNameHit = owners.filter(p => testRegex(p.lastName, text));
 	if (lastNameHit.length === 1) {
 		return lastNameHit[0];
 	}
-	const nicknameHit = owners.filter(p => RegExp(p.nickname || '', 'ig').test(text));
+	const nicknameHit = owners.filter(p => testRegex(p.nickname, text));
 	if (nicknameHit.length === 1) {
 		return nicknameHit[0];
 	}
@@ -78,6 +87,7 @@ function findOwnerByName(text: string, owners: Person[]): Person | null {
 
 export default function() {
 	const app = express();
+	app.use(webhook());
 	app.use(dbMiddleware);
 	// TWIML middleware
 	app.use(bodyParser.urlencoded({ extended: true }), twimlMiddleware);

@@ -3,9 +3,11 @@ import * as functions from 'firebase-functions';
 setupEnv();
 import createVoiceApp from './voice';
 import createGraphQlApp from './graphql';
+import createStatusApp from './voice/status';
 
 exports.voice = functions.runWith({ memory: '1GB' }).https.onRequest(createVoiceApp());
 exports.graphql = functions.runWith({ memory: '1GB' }).https.onRequest(createGraphQlApp());
+exports.status = functions.https.onRequest(createStatusApp());
 
 function setupEnv() {
 	let cfg: { [k: string]: any } = functions.config();

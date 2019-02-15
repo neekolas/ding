@@ -18,7 +18,7 @@ export async function userMiddleware(req: RequestWithUser, res, next) {
 	if (method === 'OPTIONS') {
 		return next();
 	}
-	if (headers.authorization) {
+	if (headers.authorization !== undefined) {
 		try {
 			const token = headers['authorization'].replace('Bearer ', '');
 			const decoded = await admin.auth().verifyIdToken(token);

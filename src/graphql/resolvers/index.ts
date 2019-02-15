@@ -1,7 +1,7 @@
 import { DB, findAvailableLine, upsertPerson } from '../../db';
 import { lookupAddress, findCountry, lookupPlace } from '../../maps';
 import { Person, PersonSuiteRole, Suite, Buzzer } from '../../models';
-import { generateActivationCode } from '../utils';
+import { generateActivationCode } from '../../utils';
 import { ForbiddenError } from 'apollo-server-core';
 
 export interface ResolverContext {
