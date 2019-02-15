@@ -89,7 +89,7 @@ export default function() {
 	const app = express();
 	app.use(dbMiddleware);
 	// TWIML middleware
-	app.use(bodyParser.urlencoded({ extended: true }), twimlMiddlewareFactory());
+	app.use(twimlMiddlewareFactory());
 
 	// Root Handler
 	app.post('/', async function(req: VoiceRequest, res) {
