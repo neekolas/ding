@@ -5,7 +5,7 @@ import { Request } from 'express';
 import VoiceResponse = require('twilio/lib/twiml/VoiceResponse');
 import { DB } from '../db';
 import { Buzz } from '../models';
-import { BuzzLogger } from './logger';
+import { BuzzLogger, buzzLogger } from './logger';
 
 export type VoiceRequest = Request & {
 	twiml: VoiceResponse;

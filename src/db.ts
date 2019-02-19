@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { createConnection, getConnectionOptions, getConnection, Connection, Repository, Not, In } from 'typeorm';
 import { Person, Suite, Buzzer, Buzz, TwilioLine, PersonSuite, PersonSuiteRole } from './models';
-
+import twilioClient from './twilio';
 export interface DB {
 	connection: Connection;
 	People: Repository<Person>;
@@ -81,7 +81,8 @@ export async function upsertPerson(db: DB, phoneNumber: string): Promise<Person>
 	await db.connection.transaction(async entityManager => {
 		person = await entityManager.findOne(Person, { where: { phoneNumber } });
 		if (!person) {
-			person = entityManager.create(Person, { phoneNumber });
+			const { firstName, lastName } = await twilioClient.lookupNumber(phoneNumber);
+			person = entityManager.create(Person, { phoneNumber, firstName, lastName });
 			person = await entityManager.save(Person, person);
 		}
 	});

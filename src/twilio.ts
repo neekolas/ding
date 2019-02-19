@@ -17,6 +17,16 @@ class TwilioClient {
 			to
 		});
 	}
+	async lookupNumber(phoneNumber: string): Promise<{ firstName: string; lastName: string }> {
+		let firstName = '',
+			lastName = '';
+		const result = await this.client.lookups.phoneNumbers(phoneNumber).fetch({ countryCode: 'US' });
+		const { callerName } = result;
+		if (callerName) {
+			[firstName, lastName] = callerName.split(' ', 2);
+		}
+		return { firstName, lastName };
+	}
 	async redirectCall(callID: string, url: string) {
 		return this.client.calls(callID).update({ method: 'POST', url });
 	}
