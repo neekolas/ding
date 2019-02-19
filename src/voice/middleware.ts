@@ -1,30 +1,30 @@
 import { createHash, createHmac } from 'crypto';
 import scmp from 'scmp';
 import * as url from 'url';
-import { Request } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import VoiceResponse = require('twilio/lib/twiml/VoiceResponse');
 import { DB } from '../db';
 import { Buzz } from '../models';
 import { BuzzLogger, buzzLogger } from './logger';
 
 export type VoiceRequest = Request & {
-	twiml: VoiceResponse;
-	body: any;
-	db: DB;
+    twiml: VoiceResponse;
+    body: any;
+    db: DB;
 };
 
 // Only applied on routes with :buzzId param
 export type BuzzRequest = VoiceRequest & {
-	buzz: Buzz;
-	logger: BuzzLogger;
+    buzz: Buzz;
+    logger: BuzzLogger;
 };
 
 function validateBody(body, expectedValue) {
-	var hash = createHash('sha256')
-		.update(Buffer.from(body, 'utf-8'))
-		.digest('hex');
+    var hash = createHash('sha256')
+        .update(Buffer.from(body, 'utf-8'))
+        .digest('hex');
 
-	return scmp(Buffer.from(expectedValue), Buffer.from(hash));
+    return scmp(Buffer.from(expectedValue), Buffer.from(hash));
 }
 
 /**
@@ -35,17 +35,17 @@ function validateBody(body, expectedValue) {
  @param {object} params - the parameters sent with this request
  */
 function validateRequest(authToken, twilioHeader, url, params) {
-	Object.keys(params)
-		.sort()
-		.forEach(function(key) {
-			url = url + key + params[key];
-		});
+    Object.keys(params)
+        .sort()
+        .forEach(function(key) {
+            url = url + key + params[key];
+        });
 
-	var signature = createHmac('sha1', authToken)
-		.update(Buffer.from(url, 'utf-8'))
-		.digest('base64');
+    var signature = createHmac('sha1', authToken)
+        .update(Buffer.from(url, 'utf-8'))
+        .digest('base64');
 
-	return scmp(Buffer.from(twilioHeader), Buffer.from(signature));
+    return scmp(Buffer.from(twilioHeader), Buffer.from(signature));
 }
 
 /**
@@ -57,11 +57,11 @@ function validateRequest(authToken, twilioHeader, url, params) {
    @param {string} body - The body of the request
    */
 function validateRequestWithBody(authToken, twilioHeader, requestUrl, body) {
-	var urlObject = new url.URL(requestUrl);
-	return (
-		validateRequest(authToken, twilioHeader, requestUrl, {}) &&
-		validateBody(body, urlObject.searchParams.get('bodySHA256'))
-	);
+    var urlObject = new url.URL(requestUrl);
+    return (
+        validateRequest(authToken, twilioHeader, requestUrl, {}) &&
+        validateBody(body, urlObject.searchParams.get('bodySHA256'))
+    );
 }
 
 /**
@@ -75,60 +75,82 @@ function validateRequestWithBody(authToken, twilioHeader, requestUrl, body) {
       - protocol: manually specify the protocol used by Twilio in a number's webhook config
    */
 function validateExpressRequest(request, authToken, { path }) {
-	var protocol = 'https';
-	var host = request.headers.host;
+    var protocol = 'https';
+    var host = request.headers.host;
 
-	let webhookUrl = url.format({
-		protocol: protocol,
-		host: host,
-		pathname: path
-	});
+    let webhookUrl = url.format({
+        protocol: protocol,
+        host: host,
+        pathname: path
+    });
 
-	let body = request.rawBody;
-	console.log(webhookUrl);
-	if (webhookUrl.indexOf('bodySHA256') > 0) {
-		return validateRequestWithBody(authToken, request.headers['x-twilio-signature'], webhookUrl, body);
-	} else {
-		return validateRequest(authToken, request.headers['x-twilio-signature'], webhookUrl, body);
-	}
+    let body = request.rawBody;
+    console.log(webhookUrl);
+    if (webhookUrl.indexOf('bodySHA256') > 0) {
+        return validateRequestWithBody(
+            authToken,
+            request.headers['x-twilio-signature'],
+            webhookUrl,
+            body
+        );
+    } else {
+        return validateRequest(
+            authToken,
+            request.headers['x-twilio-signature'],
+            webhookUrl,
+            body
+        );
+    }
 }
 
 export function twimlMiddlewareFactory(path: string) {
-	const { TWILIO_AUTH_TOKEN } = process.env;
+    const { TWILIO_AUTH_TOKEN } = process.env;
 
-	return function(req, res, next) {
-		next();
-		// var valid = validateExpressRequest(req, TWILIO_AUTH_TOKEN, { path });
+    return function(req, res, next) {
+        next();
+        // var valid = validateExpressRequest(req, TWILIO_AUTH_TOKEN, { path });
 
-		// if (valid) {
-		// 	console.log('Valid Twilio Request');
-		// 	next();
-		// } else {
-		// 	console.log('Validation failed', req.headers['x-twilio-signature'], TWILIO_AUTH_TOKEN);
-		// 	return res
-		// 		.type('text/plain')
-		// 		.status(403)
-		// 		.send('Twilio Request Validation Failed.');
-		// }
-	};
+        // if (valid) {
+        // 	console.log('Valid Twilio Request');
+        // 	next();
+        // } else {
+        // 	console.log('Validation failed', req.headers['x-twilio-signature'], TWILIO_AUTH_TOKEN);
+        // 	return res
+        // 		.type('text/plain')
+        // 		.status(403)
+        // 		.send('Twilio Request Validation Failed.');
+        // }
+    };
 }
 
-export function twimlMiddleware(req: VoiceRequest, res, next) {
-	req.twiml = new VoiceResponse();
-	res.setHeader('Content-Type', 'text/xml');
-	console.log(req.url, '\n', JSON.stringify(req.body));
-	next();
+// Middleware to add req.twiml object and log inbound requestws
+export function twimlMiddleware(
+    req: VoiceRequest,
+    res: Response,
+    next: NextFunction
+) {
+    req.twiml = new VoiceResponse();
+    res.setHeader('Content-Type', 'text/xml');
+    console.log(req.url, '\n', JSON.stringify(req.body));
+    next();
 }
 
-export async function buzzMiddleware(req: BuzzRequest, res, next) {
-	const { params, db } = req;
-	const { buzzId } = params;
-	try {
-		req.buzz = await db.Buzzes.findOneOrFail(buzzId, { relations: ['suite', 'match', 'match.person'] });
-		req.logger = buzzLogger(req.buzz);
-		next();
-	} catch (e) {
-		console.error(e);
-		return res.sendStatus(401);
-	}
+// Middleware to add req.buzz object representing state of current buzz session
+export async function buzzMiddleware(
+    req: BuzzRequest,
+    res: Response,
+    next: NextFunction
+) {
+    const { params, db } = req;
+    const { buzzId } = params;
+    try {
+        req.buzz = await db.Buzzes.findOneOrFail(buzzId, {
+            relations: ['suite', 'match', 'match.person']
+        });
+        req.logger = buzzLogger(req.buzz);
+        next();
+    } catch (e) {
+        console.error(e);
+        return res.sendStatus(401);
+    }
 }
