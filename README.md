@@ -31,3 +31,20 @@ export TWILIO_DEFAULT_NUMBER=$A_NUMBER_FROM_YOUR_TWILIO_ACCOUNT
 2. Create a Postgres Cloud SQL instance
 3. Create a Firebase CI token by running `npx firebase login:ci` and set it as an environment variable named FIREBASE_TOKEN in CircleCI
 4. Force a build in CircleCI by committing your change from step 1
+
+### Init Local Database
+
+You need at least one Twilio number in the database to be able to add a suite. You can run this mutation on localhost at the /graphql route, which serves a graphql playground
+
+```graphql
+mutation CreateLine {
+    createLine(phoneNumber: "$TWILIO_PHONE_NUMBER", country: "US")
+}
+```
+
+## Resources
+
+-   http://typeorm.io
+-   https://firebase.google.com/docs/functions/
+-   https://cloud.google.com/functions/docs/sql
+-   https://www.twilio.com/docs/voice/twiml/gather#partialresultcallback

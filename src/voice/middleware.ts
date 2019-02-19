@@ -108,6 +108,7 @@ export function twimlMiddlewareFactory(path: string) {
 
     return function(req, res, next) {
         next();
+        // TODO - Figure out why this code is failing on Google Cloud Functions, but working with localtunnel
         // var valid = validateExpressRequest(req, TWILIO_AUTH_TOKEN, { path });
 
         // if (valid) {

@@ -10,6 +10,8 @@ export type RequestWithUser = Request & {
     user?: Person;
 };
 
+// Extracts the user from a Firebase ID token and adds the user into the `req` object for the Request
+// Will create new user in the db on the first request after initial phone login
 export async function userMiddleware(req: RequestWithUser, res, next) {
     const { headers, db, method } = req;
 
