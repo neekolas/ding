@@ -1,5 +1,5 @@
-import express, { Request } from 'express';
 import * as functions from 'firebase-functions';
+import { setupEnv } from './utils';
 setupEnv();
 import createVoiceApp from './voice';
 import createGraphQlApp from './graphql';
@@ -16,22 +16,3 @@ exports.graphql = functions
     .https.onRequest(createGraphQlApp());
 
 exports.status = functions.https.onRequest(createStatusApp());
-
-// Sets some environment variables based on Twilio function runtime config.
-function setupEnv() {
-    let cfg: { [k: string]: any } = functions.config();
-    var { maps, db, twilio } = cfg;
-    if (maps) {
-        process.env.MAPS_API_KEY = maps.api_key;
-    }
-    if (db) {
-        Object.keys(db).forEach(k => {
-            process.env[`TYPEORM_${k.toUpperCase()}`] = db[k];
-        });
-    }
-    if (twilio) {
-        Object.keys(twilio).forEach(k => {
-            process.env[`TWILIO_${k.toUpperCase()}`] = twilio[k];
-        });
-    }
-}

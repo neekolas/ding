@@ -1,4 +1,5 @@
 import { hashSync, compareSync } from 'bcrypt';
+import * as functions from 'firebase-functions';
 const SALT_ROUNDS = 5;
 
 function formatNumberLength(num, length) {
@@ -21,4 +22,23 @@ export function generateHashedActivationCode(): { hash: string; code: string } {
 
 export function compareActivationCode(a: string, b: string): boolean {
     return compareSync(a, b);
+}
+
+// Sets some environment variables based on Twilio function runtime config.
+export function setupEnv() {
+    let cfg: { [k: string]: any } = functions.config();
+    var { maps, db, twilio } = cfg;
+    if (maps) {
+        process.env.MAPS_API_KEY = maps.api_key;
+    }
+    if (db) {
+        Object.keys(db).forEach(k => {
+            process.env[`TYPEORM_${k.toUpperCase()}`] = db[k];
+        });
+    }
+    if (twilio) {
+        Object.keys(twilio).forEach(k => {
+            process.env[`TWILIO_${k.toUpperCase()}`] = twilio[k];
+        });
+    }
 }
