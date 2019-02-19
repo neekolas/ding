@@ -15,4 +15,5 @@ exports.graphql = functions
     .runWith({ memory: '1GB' })
     .https.onRequest(createGraphQlApp());
 
+// Twilio status handler
 exports.status = functions.https.onRequest(createStatusApp());
