@@ -8,7 +8,8 @@ passport.use(
         {
             clientID: SLACK_CLIENT_ID,
             clientSecret: SLACK_CLIENT_SECRET,
-            scope: 'bot identity.basic users:read'
+            scope: 'bot users:read',
+            skipUserProfile: true
         },
         (accessToken, refreshToken, params, profile, done) => {
             console.log(accessToken);
