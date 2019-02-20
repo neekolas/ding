@@ -9,6 +9,7 @@ import {
     PlaceSearchResult,
     AddressComponent
 } from '@google/maps';
+
 const client = createClient({
     key: MAPS_API_KEY || '',
     Promise: Promise,
