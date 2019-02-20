@@ -47,6 +47,8 @@ export default function() {
         function(req: SlackRequest, res, next) {
             const { query } = req;
             req.session = query;
+            console.log('Session is', req.session);
+            next();
         },
         passport.authorize('slack', {
             successRedirect: callbackURL
