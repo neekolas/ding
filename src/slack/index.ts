@@ -2,14 +2,15 @@ import { Strategy as SlackStrategy } from 'passport-slack';
 import passport from 'passport';
 import express from 'express';
 const { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET } = process.env;
-
+const callbackURL = `https://manage.dingdong.buzz/slack/callback`;
 passport.use(
     new SlackStrategy(
         {
             clientID: SLACK_CLIENT_ID,
             clientSecret: SLACK_CLIENT_SECRET,
             scope: 'bot users:read',
-            skipUserProfile: true
+            skipUserProfile: true,
+            callbackURL
         },
         (accessToken, refreshToken, params, profile, done) => {
             console.log(accessToken);
@@ -29,7 +30,7 @@ export default function() {
     app.get(
         '/slack/login',
         passport.authorize('slack', {
-            successRedirect: `https://manage.dingdong.buzz/slack/callback`
+            successRedirect: callbackURL
         })
     );
 
