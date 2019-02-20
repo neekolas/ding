@@ -27,7 +27,7 @@ export function compareActivationCode(a: string, b: string): boolean {
 // Sets some environment variables based on Twilio function runtime config.
 export function setupEnv() {
     let cfg: { [k: string]: any } = functions.config();
-    var { maps, db, twilio } = cfg;
+    var { maps, db, twilio, slack } = cfg;
     if (maps) {
         process.env.MAPS_API_KEY = maps.api_key;
     }
@@ -39,6 +39,11 @@ export function setupEnv() {
     if (twilio) {
         Object.keys(twilio).forEach(k => {
             process.env[`TWILIO_${k.toUpperCase()}`] = twilio[k];
+        });
+    }
+    if (slack) {
+        Object.keys(slack).forEach(k => {
+            process.env[`SLACK_${k.toUpperCase()}`] = slack[k];
         });
     }
 }
