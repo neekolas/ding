@@ -4,7 +4,6 @@ import {
     Column,
     OneToMany,
     ManyToOne,
-    PrimaryColumn,
     Generated,
     Index
 } from 'typeorm';

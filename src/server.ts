@@ -1,4 +1,4 @@
-import express, { Request } from 'express';
+import express from 'express';
 import createVoiceApp from './voice';
 import createGraphQlApp from './graphql';
 const app = express();
