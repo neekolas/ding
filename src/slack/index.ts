@@ -1,6 +1,7 @@
 import { Strategy as SlackStrategy } from 'passport-slack';
 import passport from 'passport';
 import express from 'express';
+import { dbMiddleware } from '../db';
 const { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET } = process.env;
 const callbackURL = `https://manage.dingdong.buzz/slack/callback`;
 passport.use(
@@ -14,9 +15,8 @@ passport.use(
         },
         (accessToken, refreshToken, params, profile, done) => {
             console.log(accessToken);
-            console.log(profile);
             console.log(params.bot);
-            done();
+            done(null, { accessToken, bot: params.bot });
         }
     )
 );
@@ -33,12 +33,15 @@ export default function() {
             successRedirect: callbackURL
         })
     );
-
+    app.use(dbMiddleware);
     // OAuth callback url
     app.get(
         '/slack/callback',
-        passport.authorize('slack', { failureRedirect: '/login' }),
-        (req, res) => res.redirect('https://manage.dingdong.buzz')
+        passport.authorize('slack', { failureRedirect: '/slack/login' }),
+        (req, res) => {
+            console.log('USER', req.user);
+            res.redirect('https://manage.dingdong.buzz');
+        }
     );
     return app;
 }
