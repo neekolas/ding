@@ -19,4 +19,5 @@ exports.graphql = functions
 // Twilio status handler
 exports.status = functions.https.onRequest(createStatusApp());
 
+// Slack Passport Handler
 exports.slack = functions.https.onRequest(createSlackApp());

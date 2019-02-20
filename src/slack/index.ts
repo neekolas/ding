@@ -25,7 +25,12 @@ export default function() {
     app.use(require('body-parser').urlencoded({ extended: true }));
 
     // path to start the OAuth flow
-    app.get('/slack/login', passport.authorize('slack'));
+    app.get(
+        '/slack/login',
+        passport.authorize('slack', {
+            successRedirect: `https://manage.dingdong.buzz/slack/callback`
+        })
+    );
 
     // OAuth callback url
     app.get(
