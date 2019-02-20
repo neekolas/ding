@@ -2,7 +2,7 @@ import { Strategy as SlackStrategy } from 'passport-slack';
 import passport from 'passport';
 import express, { Request } from 'express';
 import { dbMiddleware, DB } from '../db';
-import session from 'express-session';
+import session from 'cookie-session';
 
 const { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET } = process.env;
 const callbackURL = `https://manage.dingdong.buzz/slack/callback`;
@@ -35,10 +35,9 @@ export default function() {
     app.set('trust proxy', 1);
     app.use(
         session({
-            secret: 'dingdong is the best ever',
-            resave: false,
-            saveUninitialized: true,
-            cookie: { secure: true }
+            name: 'session',
+            keys: ['dingdong is the best'],
+            maxAge: 24 * 60 * 60 * 1000
         })
     );
     // path to start the OAuth flow
