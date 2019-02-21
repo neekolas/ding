@@ -61,7 +61,8 @@ export default function() {
         '/slack/callback',
         passport.authorize('slack', { failureRedirect: '/slack/login' }),
         (req: SlackRequest, res) => {
-            console.log(req.session);
+            console.log(req.headers);
+            console.log(req.cookies);
             console.log('USER', req.account);
             res.redirect('https://manage.dingdong.buzz');
         }
