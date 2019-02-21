@@ -35,10 +35,8 @@ export default function() {
         session({
             name: 'dd-session',
             keys: ['dingdong is the best'],
-            cookie: {
-                maxAge: 24 * 60 * 60 * 1000,
-                httpOnly: false
-            }
+            maxAge: 24 * 60 * 60 * 1000,
+            httpOnly: false
         })
     );
     app.use(passport.initialize());
