@@ -26,26 +26,30 @@ passport.use(
 export type SlackRequest = Request & {
     db: DB;
     session: any;
+    account: any;
 };
 
 export default function() {
     const app = express();
-    app.use(passport.initialize());
     app.use(require('body-parser').urlencoded({ extended: true }));
     app.set('trust proxy', 1);
     app.use(
         session({
             name: 'dd-session',
             keys: ['dingdong is the best'],
-            maxAge: 24 * 60 * 60 * 1000
+            maxAge: 24 * 60 * 60 * 1000,
+            httpOnly: false
         })
     );
+    app.use(passport.initialize());
+
     // path to start the OAuth flow
     app.get(
         '/slack/login',
         function(req: SlackRequest, res, next) {
             const { query } = req;
-            req.session = query;
+            req.session.token = query.token;
+            req.session.suite_id = query.suite_id;
             console.log('Session is', req.session);
             next();
         },
@@ -59,9 +63,8 @@ export default function() {
         '/slack/callback',
         passport.authorize('slack', { failureRedirect: '/slack/login' }),
         (req: SlackRequest, res) => {
-            console.log(req.cookies);
-            console.log(Object.keys(req));
-            console.log('USER', req.user);
+            console.log(req);
+            console.log('USER', req.account);
             res.redirect('https://manage.dingdong.buzz');
         }
     );
