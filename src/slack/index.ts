@@ -2,7 +2,7 @@ import { Strategy as SlackStrategy } from 'passport-slack';
 import passport from 'passport';
 import express, { Request } from 'express';
 import { dbMiddleware, DB } from '../db';
-import session from 'cookie-session';
+import session from 'firebase-cookie-session';
 
 const { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET } = process.env;
 const callbackURL = `https://manage.dingdong.buzz/slack/callback`;
@@ -33,10 +33,8 @@ export default function() {
     app.set('trust proxy', 1);
     app.use(
         session({
-            name: 'dd-session',
             keys: ['dingdong is the best'],
-            maxAge: 24 * 60 * 60 * 1000,
-            httpOnly: false
+            maxAge: 24 * 60 * 60 * 1000
         })
     );
     app.use(passport.initialize());
