@@ -35,7 +35,7 @@ export default function() {
     app.set('trust proxy', 1);
     app.use(
         session({
-            name: 'session',
+            name: 'dd-session',
             keys: ['dingdong is the best'],
             maxAge: 24 * 60 * 60 * 1000
         })
@@ -59,7 +59,8 @@ export default function() {
         '/slack/callback',
         passport.authorize('slack', { failureRedirect: '/slack/login' }),
         (req: SlackRequest, res) => {
-            console.log(req.session);
+            console.log(req.cookies);
+            console.log(Object.keys(req));
             console.log('USER', req.user);
             res.redirect('https://manage.dingdong.buzz');
         }
