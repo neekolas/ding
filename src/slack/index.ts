@@ -16,8 +16,6 @@ passport.use(
             callbackURL
         },
         (accessToken, refreshToken, params, profile, done) => {
-            console.log(accessToken);
-            console.log(params.bot);
             done(null, { accessToken, bot: params.bot });
         }
     )
