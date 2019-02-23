@@ -42,7 +42,7 @@ export default function() {
 
     // path to start the OAuth flow
     app.get(
-        '/slack/login',
+        '/slack/link',
         function(req: SlackRequest, res, next) {
             const { query } = req;
             const { token, suite_id } = query;
@@ -57,7 +57,7 @@ export default function() {
     // OAuth callback url
     app.get(
         '/slack/callback',
-        passport.authorize('slack', { failureRedirect: '/slack/login' }),
+        passport.authorize('slack', { failureRedirect: '/slack/link' }),
         async (req: SlackRequest, res) => {
             const { db } = req;
             const { suite_id, token } = req.session;
