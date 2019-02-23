@@ -3,6 +3,7 @@ import passport from 'passport';
 import express, { Request } from 'express';
 import { dbMiddleware, DB } from '../db';
 import session from 'firebase-cookie-session';
+import { userFromToken } from '../auth';
 
 const { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET } = process.env;
 const callbackURL = `https://manage.dingdong.buzz/slack/callback`;
@@ -16,7 +17,7 @@ passport.use(
             callbackURL
         },
         (accessToken, refreshToken, params, profile, done) => {
-            done(null, { accessToken, bot: params.bot });
+            done(null, params);
         }
     )
 );
@@ -44,9 +45,8 @@ export default function() {
         '/slack/login',
         function(req: SlackRequest, res, next) {
             const { query } = req;
-            req.session.token = query.token;
-            req.session.suite_id = query.suite_id;
-            console.log('Session is', req.session);
+            const { token, suite_id } = query;
+            req.session = { token, suite_id };
             next();
         },
         passport.authorize('slack', {
@@ -58,10 +58,33 @@ export default function() {
     app.get(
         '/slack/callback',
         passport.authorize('slack', { failureRedirect: '/slack/login' }),
-        (req: SlackRequest, res) => {
-            console.log(req.session);
-            console.log('USER', req.account);
-            res.redirect('https://manage.dingdong.buzz');
+        async (req: SlackRequest, res) => {
+            const { db } = req;
+            const { suite_id, token } = req.session;
+            if (!token) {
+                return res.sendStatus(401);
+            }
+            try {
+                const user = await userFromToken(db, token);
+                const { bot, team_id, team_name } = req.account;
+                if (bot) {
+                    console.log(req.account);
+                    const { bot_access_token, bot_user_id } = bot;
+                    const suite = await db.Suites.findOneOrFail({
+                        nodeID: suite_id
+                    });
+                    suite.slackApiKey = bot_access_token;
+                    suite.slackTeamId = team_id;
+                    suite.slackTeamName = team_name;
+                    await db.Suites.save(suite);
+                }
+
+                console.log('USER', req.account);
+                res.redirect(`https://manage.dingdong.buzz/suites/${suite_id}`);
+            } catch (e) {
+                console.error(e);
+                res.sendStatus(500);
+            }
         }
     );
     return app;

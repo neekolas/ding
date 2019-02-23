@@ -5,6 +5,7 @@ import {
     OneToMany,
     ManyToOne,
     Generated,
+    PrimaryColumn,
     Index
 } from 'typeorm';
 
@@ -40,11 +41,8 @@ export class Person {
     nickname?: string;
 
     @Column({ nullable: true })
-    @Index({ unique: true })
+    @Index({})
     phoneNumber?: string;
-
-    @Column({ nullable: true })
-    slackUser: string;
 
     @OneToMany(type => PersonSuite, ps => ps.person)
     suites: PersonSuite[];
@@ -107,11 +105,23 @@ export class Suite {
     @Column({ nullable: true })
     activationCode?: string;
 
+    @Column({ nullable: true })
+    slackApiKey?: string;
+
+    @Column({ nullable: true })
+    slackTeamId?: string;
+
+    @Column({ nullable: true })
+    slackTeamName?: string;
+
     @Column({ default: false })
     isActivated: boolean;
 
     @OneToMany(type => PersonSuite, rel => rel.suite)
     people: PersonSuite[];
+
+    @OneToMany(type => SlackPerson, rel => rel.suite)
+    slackPeople: SlackPerson[];
 
     @ManyToOne(type => Buzzer, buzzer => buzzer.suites)
     buzzer: Buzzer;
@@ -123,9 +133,26 @@ export class Suite {
     buzzes: Buzz[];
 }
 
-export type EventPayload = {
-    [key: string]: any;
-};
+@Entity()
+export class SlackPerson {
+    @PrimaryColumn()
+    suiteId: number;
+
+    @ManyToOne(type => Suite, suite => suite.slackPeople)
+    suite: Suite;
+
+    @PrimaryColumn()
+    slackUserId: string;
+
+    @Column()
+    firstName?: string;
+
+    @Column()
+    lastName?: string;
+
+    @Column({ default: false })
+    isActive: boolean;
+}
 
 @Entity()
 @Index(['personId', 'suiteId'], { unique: true })

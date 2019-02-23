@@ -10,6 +10,11 @@ export type RequestWithUser = Request & {
     user?: Person;
 };
 
+export async function userFromToken(db: DB, token: string): Promise<Person> {
+    const decoded = await admin.auth().verifyIdToken(token);
+    return upsertPerson(db, decoded.phone_number);
+}
+
 // Extracts the user from a Firebase ID token and adds the user into the `req` object for the Request
 // Will create new user in the db on the first request after initial phone login
 export async function userMiddleware(req: RequestWithUser, res, next) {
