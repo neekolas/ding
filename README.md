@@ -32,6 +32,8 @@ export TWILIO_DEFAULT_NUMBER=$A_NUMBER_FROM_YOUR_TWILIO_ACCOUNT
 
 ### Continuous Delivery instructions
 
+This project is designed to run unit tests inside CircleCI and deployed as a series of Firebase Functions
+
 1. Replace `dingdong-dev` with your own firebase project name in .firebaserc
 2. Create a Postgres Cloud SQL instance
 3. Create a Firebase CI token by running `npx firebase login:ci` and set it as an environment variable named FIREBASE_TOKEN in CircleCI
