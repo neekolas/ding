@@ -95,14 +95,14 @@ export async function lookupPerson(
 }
 
 // Finds a TwilioLine that is not already linked with a given BuzzerID (to ensure unique From/To combination on inbound calls from buzzer)
-export async function findAvailableLine(db: DB, buzzerId: number) {
+export async function findAvailableLine(db: DB, buzzerId: number, country: string) {
     const suites = await db.Suites.find({
         where: { buzzer: { id: buzzerId } },
         relations: ['line']
     });
     if (suites.length) {
         const lineIDs = suites.map(suite => suite.line.id);
-        return db.Lines.findOne({ id: Not(In(lineIDs)) });
+        return db.Lines.findOne({ id: Not(In(lineIDs)), country });
     } else {
         return db.Lines.findOneOrFail();
     }

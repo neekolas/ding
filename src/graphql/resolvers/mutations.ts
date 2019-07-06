@@ -44,7 +44,7 @@ export default {
             buzzer = await db.Buzzers.save(buzzer);
         }
 
-        const line = await findAvailableLine(db, buzzer.id);
+        const line = await findAvailableLine(db, buzzer.id, buzzer.country);
 
         if (!line) {
             throw new Error('Cannot find line');
